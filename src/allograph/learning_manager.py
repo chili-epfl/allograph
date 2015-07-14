@@ -7,7 +7,11 @@ using different strategies and different metrics
 
 import logging; shapeLogger = logging.getLogger("shape_logger")
 import os.path
+import glob
+import numpy as np
 from allograph import stroke
+from allograph.stroke import Stroke
+from ast import literal_eval
 
 # global variables :
 #-------------------
@@ -24,6 +28,7 @@ class LearningManager():
         self.demo_path = demo_path
         self.robot_path = robot_path
         self.robot_data = read_data(self.robot_path,0)
+        self.generated_letters = {}
         self.generate_letters('last_state')
 
     def generate_word(self, word):
@@ -35,7 +40,7 @@ class LearningManager():
     def generate_letters(self, mode='last_state'):
         if mode == 'last_state':
             for letter in alphabet:
-                stroke = self.read_last_line(letter)
+                stroke = self.robot_data[letter][-1]
                 self.generated_letters[letter] = stroke
         #if mode = 'PCA' 
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
@@ -50,9 +55,6 @@ class LearningManager():
         #if mode = 'PCA' 
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
-
-    def read_last_line(self, letter):
-        return self.robot_data[letter][-1]
 
 # static functions :
 #-------------------
@@ -69,7 +71,7 @@ def read_data(datasetDirectory, lines_to_jump):
                     for line in data.readlines():
                         i+=1
                         if i>lines_to_jump:
-                            shape = literal_eval('['+line.replace(' ',', ')+']')
+                            shape = literal_eval(('['+ line +']').replace('[,','['))
                             shape = np.reshape(shape, (-1, 1))
                             data_stroke = Stroke()
                             data_stroke.stroke_from_xxyy(np.reshape(shape,len(shape)))
@@ -86,7 +88,7 @@ def save_learned_allograph(datasetDirectory, letter, stroke):
         raise RuntimeError("path to dataset"+dataset+"not found")
     try:
         with open(dataset, "a") as f:
-            f.write(' '.join(map(str,stroke)).replace('[','').replace(']','').replace('\n',''))
+            f.write(','.join(map(str,stroke)))
             f.write('\n')
     except IOError:
         raise RuntimeError("no writing permission for file"+dataset)
