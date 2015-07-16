@@ -7,6 +7,7 @@ using different strategies and different metrics
 
 import logging; shapeLogger = logging.getLogger("shape_logger")
 import os.path
+from recordtype import recordtype
 import glob
 import numpy as np
 from allograph import stroke
@@ -15,6 +16,8 @@ from ast import literal_eval
 
 # global variables :
 #-------------------
+
+Shape = recordtype('Shape', [('path', None), ('shapeID', None), ('shapeType', None), ('shapeType_code', None), ('paramsToVary', None), ('paramValues', None)])
 
 alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
 
@@ -30,11 +33,17 @@ class LearningManager():
         self.robot_data = read_data(self.robot_path,0)
         self.generated_letters = {}
         self.generate_letters('last_state')
+        self.word_seen = set()
+        self.current_word = ""
+
+    def word_to_learn(self, word):
+        self.current_word = word
+        self.word_seen.add(word)
 
     def generate_word(self, word):
         generated_word = []
-        for letter in word:
-            generate_word.append(self.generated_letters[letter])
+        for letter in self.current_word:
+            generated_word.append(self.generated_letters[letter])
         return generated_word
 
     def generate_letters(self, mode='last_state'):
@@ -55,6 +64,14 @@ class LearningManager():
         #if mode = 'PCA' 
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
+
+    def shape_message(self, letter):
+        stroke = generated_letters[letter]
+        path = np.concatenate(stroke.x, stroke.y)
+        shape = Shape(path=path, shapeType=letter)
+
+    def seen_before(self, word):
+        return (word in self.word_seen)
 
 # static functions :
 #-------------------
@@ -92,5 +109,3 @@ def save_learned_allograph(datasetDirectory, letter, stroke):
             f.write('\n')
     except IOError:
         raise RuntimeError("no writing permission for file"+dataset)
-
-
