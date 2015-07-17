@@ -66,13 +66,14 @@ class LearningManager():
         #if mode = 'CNN' (1-D convolutionnal neural networks)
 
     def respond_to_demonstration_letter(self, demonstration, letter, mode='midway'):
-        demo_stroke = stroke.stroke_from_xxyy(demonstration)
-        demo_stroke.normalize()
+        demo_stroke = Stroke()
+        demo_stroke.stroke_from_xxyy(np.reshape(demonstration,len(demonstration)))
         demo_stroke.uniformize()
+        demo_stroke.normalize()
         if mode == 'midway':
             learned_stroke = stroke.midway(demo_stroke, self.generated_letters[letter])
             self.generated_letters[letter] = learned_stroke
-            save_learned_allograph(self.robot_data, letter, learned_stroke)
+            save_learned_allograph(self.robot_path, letter, learned_stroke)
         #if mode = 'PCA' 
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
@@ -80,14 +81,14 @@ class LearningManager():
 
 
     def shape_message(self, letter):
-        stroke = generated_letters[letter]
-        path = np.concatenate(stroke.x, stroke.y)
+        stroke = self.generated_letters[letter]
+        path = np.concatenate((stroke.x, stroke.y))
         shape = Shape(path=path, shapeType=letter)
 
     def shape_message_word(self):
         shapes = []
         for letter in self.current_word:
-            shapes.append(shape_message(letter))
+            shapes.append(self.shape_message(letter))
         return shapes
 
     def seen_before(self, word):
@@ -121,11 +122,12 @@ def read_data(datasetDirectory, lines_to_jump):
 
 def save_learned_allograph(datasetDirectory, letter, stroke):
     dataset = datasetDirectory + '/' + letter + '.dat'
+    shape_path = np.concatenate((np.array(stroke.x), np.array(stroke.y)))
     if not os.path.exists(dataset):
         raise RuntimeError("path to dataset"+dataset+"not found")
     try:
         with open(dataset, "a") as f:
-            f.write(','.join(map(str,stroke)))
+            f.write(','.join(map(str,shape_path)))
             f.write('\n')
     except IOError:
-        raise RuntimeError("no writing permission for file"+dataset)
+        raise RuntimeError("noewriting permission for file"+dataset)
