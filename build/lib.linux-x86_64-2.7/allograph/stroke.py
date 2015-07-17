@@ -211,6 +211,47 @@ class Stroke:
         self.x = x.tolist()
         self.y = y.tolist()
 
+    def normalize_wrt_y(self):
+        """ normalize the stroke with respect to the x axis """
+
+        x_min = min(self.x)
+        y_min = min(self.y)
+        y_max = max(self.y)
+
+        y_range = y_max - y_min
+
+        x = np.array(self.x)
+        y = np.array(self.y)
+        x -= x_min
+        y -= y_min
+        x = x/float(y_range)
+        y = y/float(y_range)
+
+        self.x = x.tolist()
+        self.y = y.tolist()
+
+    def normalize_wrt_max(self):
+        """ normalize the stroke with respect to the x axis """
+
+        x_min = min(self.x)
+        x_max = max(self.x)
+        y_min = min(self.y)
+        y_max = max(self.y)
+
+        x_range = x_max - x_min
+        y_range = y_max - y_min
+        max_range = max(x_range,y_range)
+
+        x = np.array(self.x)
+        y = np.array(self.y)
+        x -= x_min
+        y -= y_min
+        x = x/float(max_range)
+        y = y/float(max_range)
+
+        self.x = x.tolist()
+        self.y = y.tolist()
+
     def split_non_differentiable_points(self,treshold=1.5):
         """ V --> \+/ """
 
@@ -409,6 +450,38 @@ def group_normalize_wrt_x(strokes):
     for stroke in strokes:
         x = ((np.array(stroke.x) - x_min)/x_range).tolist()
         y = ((np.array(stroke.y) - y_min)/x_range).tolist()
+        normalized_strokes.append(Stroke(x,y))
+    return normalized_strokes
+
+def group_normalize_wrt_y(strokes):
+    """ normailize a multistroke drawing with respect to the x axis """
+
+    long_stroke = concat(strokes)
+    x_min = min(long_stroke.x)
+    x_max = max(long_stroke.x)
+    y_min = min(long_stroke.y)
+    y_range = float(y_max-y_min)
+    normalized_strokes = []
+    for stroke in strokes:
+        x = ((np.array(stroke.x) - x_min)/y_range).tolist()
+        y = ((np.array(stroke.y) - y_min)/y_range).tolist()
+        normalized_strokes.append(Stroke(x,y))
+    return normalized_strokes
+
+def group_normalize_wrt_max(strokes):
+    """ normailize a multistroke drawing with respect to the x axis """
+
+    long_stroke = concat(strokes)
+    x_min = min(long_stroke.x)
+    x_max = max(long_stroke.x)
+    y_min = min(long_stroke.y)
+    x_range = float(x_max-x_min)
+    y_range = float(y_max-y_min)
+    max_range = max(x_range,y_range)
+    normalized_strokes = []
+    for stroke in strokes:
+        x = ((np.array(stroke.x) - x_min)/max_range).tolist()
+        y = ((np.array(stroke.y) - y_min)/max_range).tolist()
         normalized_strokes.append(Stroke(x,y))
     return normalized_strokes
 

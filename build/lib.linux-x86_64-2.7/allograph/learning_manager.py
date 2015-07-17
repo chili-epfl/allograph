@@ -68,8 +68,8 @@ class LearningManager():
     def respond_to_demonstration_letter(self, demonstration, letter, mode='midway'):
         demo_stroke = Stroke()
         demo_stroke.stroke_from_xxyy(np.reshape(demonstration,len(demonstration)))
-        demo_stroke.uniformize()
-        demo_stroke.normalize()
+        #demo_stroke.uniformize()
+        demo_stroke.normalize_wrt_max()
         if mode == 'midway':
             learned_stroke = stroke.midway(demo_stroke, self.generated_letters[letter])
             self.generated_letters[letter] = learned_stroke
@@ -113,8 +113,8 @@ def read_data(datasetDirectory, lines_to_jump):
                             shape = np.reshape(shape, (-1, 1))
                             data_stroke = Stroke()
                             data_stroke.stroke_from_xxyy(np.reshape(shape,len(shape)))
-                            data_stroke.uniformize()
-                            data_stroke.normalize()
+                            #data_stroke.uniformize()
+                            data_stroke.normalize_wrt_max()
                             data_letters.setdefault(name,[]).append(data_stroke)
             except IOError:
                 raise RuntimeError("no reading permission for file"+dataset )
