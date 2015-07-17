@@ -55,9 +55,9 @@ class LearningManager():
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
 
-    def respond_to_demonstration(self, demonstration, mode='midway'): #mutual_modeling will act here
+    def respond_to_demonstration_word(self, demonstrations, mode='midway'): #mutual_modeling will act here
         if mode == 'midway':
-            for letter,stroke in demonstration:
+            for letter,stroke in demonstrations:
                 learned_stroke = stroke.midway(stroke, self.generated_letters[letter])
                 self.generated_letters[letter] = learned_stroke
                 save_learned_allograph(self.robot_data, letter, learned_stroke)
@@ -65,10 +65,30 @@ class LearningManager():
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
 
+    def respond_to_demonstration_letter(self, demonstration, letter, mode='midway'):
+        demo_stroke = stroke.stroke_from_xxyy(demonstration)
+        demo_stroke.normalize()
+        demo_stroke.uniformize()
+        if mode == 'midway':
+            learned_stroke = stroke.midway(demo_stroke, self.generated_letters[letter])
+            self.generated_letters[letter] = learned_stroke
+            save_learned_allograph(self.robot_data, letter, learned_stroke)
+        #if mode = 'PCA' 
+        #if mode = 'sigNorm' (mixture of sigma-log-normal)
+        #if mode = 'CNN' (1-D convolutionnal neural networks)
+        return self.shape_message(letter)
+
+
     def shape_message(self, letter):
         stroke = generated_letters[letter]
         path = np.concatenate(stroke.x, stroke.y)
         shape = Shape(path=path, shapeType=letter)
+
+    def shape_message_word(self):
+        shapes = []
+        for letter in self.current_word:
+            shapes.append(shape_message(letter))
+        return shapes
 
     def seen_before(self, word):
         return (word in self.word_seen)
