@@ -298,14 +298,17 @@ def save_plot_list(strokes, name):
         plt.savefig(indexed_name)
         plt.clf()
 
-def midway(stroke1, stroke2):
+def midway(stroke1, stroke2, coef = 0):
     x1 = np.array(stroke1.x)
     x2 = np.array(stroke2.x)
     y1 = np.array(stroke1.y)
     y2 = np.array(stroke2.y)
 
-    x = (x1+x2)/2.
-    y = (y1+y2)/2.
+    mu = 1./(1+np.exp(coef))
+    nu = 1-mu
+
+    x = (mu*x1+nu*x2)
+    y = (mu*y1+nu*y2)
     return Stroke(x,y)
 
 

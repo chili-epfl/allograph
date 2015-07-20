@@ -65,13 +65,13 @@ class LearningManager():
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
 
-    def respond_to_demonstration_letter(self, demonstration, letter, mode='midway'):
+    def respond_to_demonstration_letter(self, demonstration, letter, grade, mode='midway'):
         demo_stroke = Stroke()
         demo_stroke.stroke_from_xxyy(np.reshape(demonstration,len(demonstration)))
         #demo_stroke.uniformize()
         demo_stroke.normalize_wrt_max()
         if mode == 'midway':
-            learned_stroke = stroke.midway(demo_stroke, self.generated_letters[letter])
+            learned_stroke = stroke.midway(demo_stroke, self.generated_letters[letter], grade)
             self.generated_letters[letter] = learned_stroke
             save_learned_allograph(self.robot_path, letter, learned_stroke)
         #if mode = 'PCA' 
