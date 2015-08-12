@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ast import literal_eval
 from scipy.optimize import curve_fit
+from scipy.special import erf
 from sklearn.cluster import MeanShift
 
 import sys
@@ -282,15 +283,32 @@ if __name__ == "__main__":
     if len(progress)>len(grades):
         progress=progress[:len(grades)]
     
-    for i in range(len(progress)):
+    """for i in range(len(progress)):
         if progress[i]<0:
             progress[i] = 0
     for i in range(len(grades)):
         if grades[i]<0:
-            grades[i] = 0
+            grades[i] = 0"""
 
+    grades = np.array(grades)
+    progress = np.array(progress)
 
-    print np.corrcoef(progress,grades)[1,0]
+    result = np.sum(grades*progress)
+
+    # generating random vectors with same number of positive grades : 
+    rand_results = []
+    rand_grades = np.copy(grades)
+    for i in range(100000):
+        np.random.shuffle(rand_grades)
+        rand_results.append(np.sum(rand_grades*progress))
+
+    # supposing normal distribution :
+    rand_results = np.array(rand_results)
+    m = np.mean(rand_results)
+    v = np.var(rand_results)
+
+    pvalue = 1 - erf((result-m)/np.sqrt(v))
+    print pvalue
 
     plt.plot(progress,'r')
     plt.plot(grades,'b')
