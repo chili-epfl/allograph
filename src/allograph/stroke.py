@@ -36,6 +36,25 @@ class Stroke:
         self.y.append(y)
         self.len+=1
 
+    def __add__(self, stroke2):
+        x1 = np.copy(np.array(self.x))
+        x2 = np.array(stroke2.x)
+        y1 = np.copy(np.array(self.y))
+        y2 = np.array(stroke2.y)
+        return Stroke(x1+x2,y1+y2)
+
+    def __sub__(self, stroke2):
+        x1 = np.copy(np.array(self.x))
+        x2 = np.array(stroke2.x)
+        y1 = np.copy(np.array(self.y))
+        y2 = np.array(stroke2.y)
+        return Stroke(x1-x2,y1-y2)
+
+    def __mul__(self, num):
+        x1 = np.copy(np.array(self.x))
+        y1 = np.copy(np.array(self.y))
+        return Stroke(x1*num,y1*num)
+
     def reset(self):
         self.x = []
         self.y = []
@@ -584,7 +603,10 @@ def euclidian_distance(stroke1, stroke2):
 
     d = np.sqrt((x1-x2)**2+(y1-y2)**2)
     m = d-np.min(d)
-    return np.mean(d), np.mean(m)
+    if np.mean(m)<0:
+        return 0,0
+    else:
+        return np.mean(d), np.mean(m)
 
 def identify(strokes, stroke, closest=True):
     """ look for the best matching postion of a stroke inside a concatenation of a multistroke drawing """
