@@ -101,6 +101,12 @@ progress = []
 vals = []
 max_progress = []
 max_vals = []
+
+scores = []
+ch_scores = []
+
+child_progress = []
+
 grades = []
 
 opens = np.zeros(4)
@@ -140,17 +146,21 @@ if __name__ == "__main__":
                 # look for single progression :
                 if len(cur_word)>0 and ok:
                     new_scores = []
+                    new_ch_wcores = []
                     for letter in set(cur_word):
                         #index[letter]+=1
                         i = index[letter]
                         try:
                             istroke = learning_manager.robot_data[letter][i]
                         except IndexError:
-                            istroke = learning_manager.robot_data[letter][i-1]
-                        _,dist = stroke.euclidian_distance(istroke, ref_letters[letter])
-                        new_scores.append(dist)
+                            print "!"
+                        last_stroke = learning_manager.robot_data[letter][i-1]
+                        ch_stroke = last_stroke + (istroke-last_stroke)*2
+                        _,dist = stroke.euclidian_distance(ch_stroke, ref_letters[letter])
+                        _,ch_dist = stroke.euclidian_distance(ch_stroke, ref_letters[letter])
+                        new_scores.append(ch_dist)
                         if letter==cur_letter:
-                            letter_name = dist
+                            letter_name = ch_dist
 
                     max_val = np.max(np.array(new_scores))
                     arg_max = np.argmax(np.array(new_scores))
@@ -181,8 +191,10 @@ if __name__ == "__main__":
                             print cur_word
                             print line
                             i = index[letter]
+                        last_stroke = learning_manager.robot_data[letter][i-1]
                         istroke = learning_manager.robot_data[letter][i]
-                        _,dist = stroke.euclidian_distance(istroke, ref_letters[letter])
+                        ch_stroke = last_stroke + (istroke-last_stroke)*2
+                        _,dist = stroke.euclidian_distance(ch_stroke, ref_letters[letter])
                         scores.append(dist)
                     start_mean = np.mean(np.array(scores))
                     demo_done=False
@@ -206,8 +218,9 @@ if __name__ == "__main__":
                         istroke = learning_manager.robot_data[letter][i]
                     except IndexError:
                         istroke = learning_manager.robot_data[letter][i-1]
-
-                    _,dist = stroke.euclidian_distance(istroke, ref_letters[letter])
+                    last_stroke = learning_manager.robot_data[letter][i-1]
+                    ch_stroke = last_stroke + (istroke-last_stroke)*2
+                    _,dist = stroke.euclidian_distance(ch_stroke, ref_letters[letter])
                     new_scores.append(dist)
                     if letter==cur_letter:
                         letter_score = dist
@@ -236,7 +249,9 @@ if __name__ == "__main__":
                         istroke = learning_manager.robot_data[letter][i]
                     except IndexError:
                         istroke = learning_manager.robot_data[letter][i-1]
-                    _,dist = stroke.euclidian_distance(istroke, ref_letters[letter])
+                    last_stroke = learning_manager.robot_data[letter][i-1]
+                    ch_stroke = last_stroke + (istroke-last_stroke)*2
+                    _,dist = stroke.euclidian_distance(ch_stroke, ref_letters[letter])
                     for wletter,i in zip(cur_word,range(len(cur_word))):
                         if wletter==letter:
                             scores[i] = dist
@@ -282,13 +297,7 @@ if __name__ == "__main__":
 
     if len(progress)>len(grades):
         progress=progress[:len(grades)]
-    
-    """for i in range(len(progress)):
-        if progress[i]<0:
-            progress[i] = 0
-    for i in range(len(grades)):
-        if grades[i]<0:
-            grades[i] = 0"""
+
 
     grades = np.array(grades)
     progress = np.array(progress)
@@ -306,11 +315,16 @@ if __name__ == "__main__":
     rand_results = np.array(rand_results)
     m = np.mean(rand_results)
     v = np.var(rand_results)
-
+    
     z = (result-m)/np.sqrt(v)
     pvalue = 1 - 0.5*(1+erf(z/np.sqrt(2)))
+
     print pvalue
+    print len(grades)
+    print len(grades[grades>0])
+    print len(grades[grades<0])
 
     plt.plot(progress,'r')
     plt.plot(grades,'b')
     plt.show()
+
