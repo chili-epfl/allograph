@@ -84,7 +84,7 @@ class LearningManager():
             learned_stroke = stroke.midway(demo_stroke, self.generated_letters[letter], grade)
             self.generated_letters[letter] = learned_stroke
             save_learned_allograph(self.robot_path, letter, learned_stroke)
-            score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
+            _,score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
         #if mode = 'PCA' 
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
@@ -95,6 +95,7 @@ class LearningManager():
         stroke = self.generated_letters[letter]
         path = np.concatenate((stroke.x, stroke.y))
         shape = Shape(path=path, shapeType=letter)
+	return shape
 
     def shape_message_word(self):
         shapes = []
