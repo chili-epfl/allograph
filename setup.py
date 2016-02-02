@@ -13,8 +13,7 @@ setup(name='allograph',
       author_email='alexis.jacq@epfl.ch',
       package_dir = {'': 'src'},
       packages=['allograph'],
-      data_files=[('share/allograph/letter_model_datasets/uji_pen_chars2', glob.glob("share/letter_model_datasets/uji_pen_chars2/*")),
+      data_files=[('share/allograph/robot_tries/start', glob.glob("share/robot_tries/start/*")),
                   ('share/allograph/letter_model_datasets/alexis_set_for_children', glob.glob("share/letter_model_datasets/alexis_set_for_children/*")),
-		  ('share/allograph/letter_model_datasets/uji_pen_subset', glob.glob("share/letter_model_datasets/uji_pen_subset/*")),
                   ('share/doc/allograph', ['AUTHORS', 'LICENSE', 'README.md'])]
       )
