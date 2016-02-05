@@ -629,7 +629,8 @@ def align(stroke1, stroke2):
     return x1, y1, d, new_d, m, new_m
 
 def euclidian_distance(stroke1, stroke2):
-    """the euclidian distance between two strokes"""
+    """the euclidian distance between two strokes
+    with same sizes"""
 
     x1 = np.array(stroke1.x)
     x2 = np.array(stroke2.x)

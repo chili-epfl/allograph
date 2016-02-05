@@ -126,7 +126,10 @@ def read_data(datasetDirectory, lines_to_jump):
                             data_stroke = Stroke()
                             data_stroke.stroke_from_xxyy(np.reshape(shape,len(shape)))
                             #data_stroke.uniformize()
-                            data_stroke.normalize_wrt_max()
+                            try:
+                                data_stroke.normalize_wrt_max()
+                            except ValueError:
+                                print name+" is empty"
                             data_letters.setdefault(name,[]).append(data_stroke)
             except IOError:
                 raise RuntimeError("no reading permission for file"+dataset )
