@@ -280,37 +280,6 @@ if __name__ == "__main__":
                                 bug_variables.append(name)
                                 bug_variables.append(ischouchou)
 
-                                '''
-                                string2 = str(found_demo_bug.group("path2"))
-                                string = string1+string2
-                                try:
-                                    path = np.array(literal_eval(string))
-                                    graph = Stroke()
-                                    graph.stroke_from_xxyy(path)
-                                    graph.downsampleShape(70)
-                                    
-                                    if name in prev_strokes:
-                                        _,score = stroke.euclidian_distance(prev_strokes[name], graph)
-                                        prev_strokes[name].reset()
-                                        prev_strokes[name].stroke_from_xxyy(path)
-                                        prev_strokes[name].downsampleShape(70)
-                                    else:
-                                        score = -1.
-                                        prev_strokes[name]=Stroke()
-                                        prev_strokes[name].stroke_from_xxyy(path)
-                                        prev_strokes[name].downsampleShape(70)
-
-                                    liste = []
-                                    liste.append(time)
-                                    liste.append(child)
-                                    liste.append(name)
-                                    liste.append(score)
-                                    liste.append(ischouchou)
-                                    lines.append(liste)
-                                except SyntaxError:
-                                    if child=='oscar':
-                                        print "bug found"
-                                        print string'''
                             else:
                                 if child=='oscar':
                                     print "bug not found"
@@ -328,8 +297,6 @@ if __name__ == "__main__":
                 wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
             lines = []
 
-
-    ######### session 2 :
         prev_strokes = {}
 
         i = 0
@@ -388,14 +355,13 @@ if __name__ == "__main__":
                                 feedback -= 1
 
                     if bug_on_last_line:
-                        # empty bug_variables
-                        # bugonlasttime = false
+                        time = bug_variables[0]
+                        name = bug_variables[1]
+                        ischouchou = bug_variables[2]
+
                         if found_demo_bug2:
                             string2 = str(found_demo_bug2.group("path2"))
                             string = string_bug+string2
-                            time = bug_variables[0]
-                            name = bug_variables[1]
-                            ischouchou = bug_variables[2]
                             try:
                                 path = np.array(literal_eval(string))#.replace('"','')))
                                 graph = Stroke()
@@ -421,14 +387,64 @@ if __name__ == "__main__":
                                 liste.append(ischouchou)
                                 lines.append(liste)
                             except SyntaxError:
-                                if child=='oscar':
-                                    print 'second_bug_not_translated'
-                                    print string_bug
-                                    print string2
+                                try:
+                                    path = np.array(literal_eval(string_bug+')'))#.replace('"','')))
+                                    graph = Stroke()
+                                    graph.stroke_from_xxyy(path)
+                                    graph.downsampleShape(70)
+                                    
+                                    if name in prev_strokes:
+                                        _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                        prev_strokes[name].reset()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+                                    else:
+                                        score = -1.
+                                        prev_strokes[name]=Stroke()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+
+                                    liste = []
+                                    liste.append(time)
+                                    liste.append(child)
+                                    liste.append(name)
+                                    liste.append(score)
+                                    liste.append(ischouchou)
+                                    lines.append(liste)
+                                except SyntaxError:
+                                    if child=='oscar':
+                                        print 'second_bug_not_translated'
+                                        print string_bug
+                                        print string2
                         else:
-                            if child=='oscar':
-                                print 'second_bug_not_found'
-                                print line
+                            try:
+                                path = np.array(literal_eval(string_bug+')'))#.replace('"','')))
+                                graph = Stroke()
+                                graph.stroke_from_xxyy(path)
+                                graph.downsampleShape(70)
+                                
+                                if name in prev_strokes:
+                                    _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                    prev_strokes[name].reset()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+                                else:
+                                    score = -1.
+                                    prev_strokes[name]=Stroke()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+
+                                liste = []
+                                liste.append(time)
+                                liste.append(child)
+                                liste.append(name)
+                                liste.append(score)
+                                liste.append(ischouchou)
+                                lines.append(liste)
+                            except SyntaxError:
+                                if child=='oscar':
+                                    print 'last_bug_not_translated'
+                                    print line
 
                         bug_on_last_line = False
                         bug_variables = []
@@ -485,37 +501,6 @@ if __name__ == "__main__":
                                 bug_variables.append(name)
                                 bug_variables.append(ischouchou)
 
-                                '''
-                                string2 = str(found_demo_bug.group("path2"))
-                                string = string1+string2
-                                try:
-                                    path = np.array(literal_eval(string))
-                                    graph = Stroke()
-                                    graph.stroke_from_xxyy(path)
-                                    graph.downsampleShape(70)
-                                    
-                                    if name in prev_strokes:
-                                        _,score = stroke.euclidian_distance(prev_strokes[name], graph)
-                                        prev_strokes[name].reset()
-                                        prev_strokes[name].stroke_from_xxyy(path)
-                                        prev_strokes[name].downsampleShape(70)
-                                    else:
-                                        score = -1.
-                                        prev_strokes[name]=Stroke()
-                                        prev_strokes[name].stroke_from_xxyy(path)
-                                        prev_strokes[name].downsampleShape(70)
-
-                                    liste = []
-                                    liste.append(time)
-                                    liste.append(child)
-                                    liste.append(name)
-                                    liste.append(score)
-                                    liste.append(ischouchou)
-                                    lines.append(liste)
-                                except SyntaxError:
-                                    if child=='oscar':
-                                        print "bug found"
-                                        print string'''
                             else:
                                 if child=='oscar':
                                     print "bug not found"
@@ -533,9 +518,6 @@ if __name__ == "__main__":
                 wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
             lines = []
 
-
-
-    # children with 1 session :
 
     for child in children_x1:
         log_path1 = load_log1(child)
@@ -598,14 +580,13 @@ if __name__ == "__main__":
                                 feedback -= 1
 
                     if bug_on_last_line:
-                        # empty bug_variables
-                        # bugonlasttime = false
+                        time = bug_variables[0]
+                        name = bug_variables[1]
+                        ischouchou = bug_variables[2]
+
                         if found_demo_bug2:
                             string2 = str(found_demo_bug2.group("path2"))
                             string = string_bug+string2
-                            time = bug_variables[0]
-                            name = bug_variables[1]
-                            ischouchou = bug_variables[2]
                             try:
                                 path = np.array(literal_eval(string))#.replace('"','')))
                                 graph = Stroke()
@@ -631,14 +612,64 @@ if __name__ == "__main__":
                                 liste.append(ischouchou)
                                 lines.append(liste)
                             except SyntaxError:
-                                if child=='oscar':
-                                    print 'second_bug_not_translated'
-                                    print string_bug
-                                    print string2
+                                try:
+                                    path = np.array(literal_eval(string_bug+')'))#.replace('"','')))
+                                    graph = Stroke()
+                                    graph.stroke_from_xxyy(path)
+                                    graph.downsampleShape(70)
+                                    
+                                    if name in prev_strokes:
+                                        _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                        prev_strokes[name].reset()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+                                    else:
+                                        score = -1.
+                                        prev_strokes[name]=Stroke()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+
+                                    liste = []
+                                    liste.append(time)
+                                    liste.append(child)
+                                    liste.append(name)
+                                    liste.append(score)
+                                    liste.append(ischouchou)
+                                    lines.append(liste)
+                                except SyntaxError:
+                                    if child=='oscar':
+                                        print 'second_bug_not_translated'
+                                        print string_bug
+                                        print string2
                         else:
-                            if child=='oscar':
-                                print 'second_bug_not_found'
-                                print line
+                            try:
+                                path = np.array(literal_eval(string_bug+')'))#.replace('"','')))
+                                graph = Stroke()
+                                graph.stroke_from_xxyy(path)
+                                graph.downsampleShape(70)
+                                
+                                if name in prev_strokes:
+                                    _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                    prev_strokes[name].reset()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+                                else:
+                                    score = -1.
+                                    prev_strokes[name]=Stroke()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+
+                                liste = []
+                                liste.append(time)
+                                liste.append(child)
+                                liste.append(name)
+                                liste.append(score)
+                                liste.append(ischouchou)
+                                lines.append(liste)
+                            except SyntaxError:
+                                if child=='oscar':
+                                    print 'last_bug_not_translated'
+                                    print line
 
                         bug_on_last_line = False
                         bug_variables = []
@@ -695,37 +726,6 @@ if __name__ == "__main__":
                                 bug_variables.append(name)
                                 bug_variables.append(ischouchou)
 
-                                '''
-                                string2 = str(found_demo_bug.group("path2"))
-                                string = string1+string2
-                                try:
-                                    path = np.array(literal_eval(string))
-                                    graph = Stroke()
-                                    graph.stroke_from_xxyy(path)
-                                    graph.downsampleShape(70)
-                                    
-                                    if name in prev_strokes:
-                                        _,score = stroke.euclidian_distance(prev_strokes[name], graph)
-                                        prev_strokes[name].reset()
-                                        prev_strokes[name].stroke_from_xxyy(path)
-                                        prev_strokes[name].downsampleShape(70)
-                                    else:
-                                        score = -1.
-                                        prev_strokes[name]=Stroke()
-                                        prev_strokes[name].stroke_from_xxyy(path)
-                                        prev_strokes[name].downsampleShape(70)
-
-                                    liste = []
-                                    liste.append(time)
-                                    liste.append(child)
-                                    liste.append(name)
-                                    liste.append(score)
-                                    liste.append(ischouchou)
-                                    lines.append(liste)
-                                except SyntaxError:
-                                    if child=='oscar':
-                                        print "bug found"
-                                        print string'''
                             else:
                                 if child=='oscar':
                                     print "bug not found"
@@ -742,6 +742,5 @@ if __name__ == "__main__":
             for liste in lines:
                 wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
             lines = []
-
 
 
