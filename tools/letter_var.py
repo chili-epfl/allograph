@@ -11,6 +11,7 @@ import sys
 import re
 import inspect
 import glob
+import math
 
 from allograph.learning_manager import LearningManager
 from allograph.stroke import Stroke
@@ -47,8 +48,12 @@ nochouchou = {
 
 ##################### sparser :
 
-new_demo = re.compile('"(?P<time>..........................)" demo:(?P<letter>.) "(?P<path>.*)')
+new_demo = re.compile('"(?P<time>..........................)" demo:(?P<letter>.) "(?P<path>\(.*\))')
+new_demo_bug = re.compile('"(?P<time>..........................)" demo:(?P<letter>.) "(?P<path1>\(.*)"2016-')
+new_demo_bug2 = re.compile('(?P<path2>.*\))')
 new_button = re.compile('user_feedback:(?P<button>.)')
+new_word = re.compile('word:(?P<word>.*)')
+new_repetition = re.compile('repetition:(?P<number>.)')
 
 ##################### functions :
 
@@ -74,7 +79,21 @@ if __name__ == "__main__":
         prev_strokes = {}
 
         i = 0
-        feedback = 0
+        feedback = float('nan')
+        new_time = ""
+        new_child = ""
+        new_name = ""
+        new_score = 0
+        new_ischouchou = False
+        
+        word_done = False
+        bug_on_last_line = False
+        string_bug = ""
+        bug_variables = []
+
+        lines = []
+
+
         with open(child+'.csv', 'wb') as csvfile:
             wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
 
@@ -84,26 +103,150 @@ if __name__ == "__main__":
 
                     found_demo = new_demo.search(line)
                     found_button = new_button.search(line)
+                    found_word = new_word.search(line)
+                    found_repetition = new_repetition.search(line)
+                    found_demo_bug = new_demo_bug.search(line)
+                    found_demo_bug2 = new_demo_bug2.search(line)
 
+                    if found_repetition:
+                        word_done = True
 
-                    new_feedback = 0
+                    if found_word:
+                        word = str(found_word.group("word"))[:-1]
+                        if word_done:
+                            for liste in lines:
+                                wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
+                            lines = []
+                            feedback = float('nan')
+                            word_done = False
+
                     if found_button:
-                        #print found_button.group("button")
-                        #print child
+                        
                         if str(found_button.group("button"))=="+":
-                            new_feedback = 1
+                            if math.isnan(feedback):
+                                feedback = 1
+                            else:
+                                feedback += 1
                         else:
-                            new_feedback = -1
+                            if math.isnan(feedback):
+                                feedback = -1
+                            else:
+                                feedback -= 1
+
+                    if bug_on_last_line:
+                        time = bug_variables[0]
+                        name = bug_variables[1]
+                        ischouchou = bug_variables[2]
+
+                        if found_demo_bug2:
+                            string2 = str(found_demo_bug2.group("path2"))
+                            string = string_bug+string2
+                            try:
+                                path = np.array(literal_eval(string))#.replace('"','')))
+                                graph = Stroke()
+                                graph.stroke_from_xxyy(path)
+                                graph.downsampleShape(70)
+                                
+                                if name in prev_strokes:
+                                    _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                    prev_strokes[name].reset()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+                                else:
+                                    score = -1.
+                                    prev_strokes[name]=Stroke()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+
+                                liste = []
+                                liste.append(time)
+                                liste.append(child)
+                                liste.append(name)
+                                liste.append(score)
+                                liste.append(ischouchou)
+                                lines.append(liste)
+                            except SyntaxError:
+                                try:
+                                    path = np.array(literal_eval(string_bug+')'))#.replace('"','')))
+                                    graph = Stroke()
+                                    graph.stroke_from_xxyy(path)
+                                    graph.downsampleShape(70)
+                                    
+                                    if name in prev_strokes:
+                                        _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                        prev_strokes[name].reset()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+                                    else:
+                                        score = -1.
+                                        prev_strokes[name]=Stroke()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+
+                                    liste = []
+                                    liste.append(time)
+                                    liste.append(child)
+                                    liste.append(name)
+                                    liste.append(score)
+                                    liste.append(ischouchou)
+                                    lines.append(liste)
+                                except SyntaxError:
+                                    if child=='oscar':
+                                        print 'second_bug_not_translated'
+                                        print string_bug
+                                        print string2
+                        else:
+                            try:
+                                path = np.array(literal_eval(string_bug+')'))#.replace('"','')))
+                                graph = Stroke()
+                                graph.stroke_from_xxyy(path)
+                                graph.downsampleShape(70)
+                                
+                                if name in prev_strokes:
+                                    _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                    prev_strokes[name].reset()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+                                else:
+                                    score = -1.
+                                    prev_strokes[name]=Stroke()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+
+                                liste = []
+                                liste.append(time)
+                                liste.append(child)
+                                liste.append(name)
+                                liste.append(score)
+                                liste.append(ischouchou)
+                                lines.append(liste)
+                            except SyntaxError:
+                                if child=='oscar':
+                                    print 'last_bug_not_translated'
+                                    print line
+
+                        bug_on_last_line = False
+                        bug_variables = []
+    
+
 
                     if found_demo :
-                        print feedback
 
-                        string = str(found_demo.group("path"))[:-1]
+                        if word_done:
+                            for liste in lines:
+                                wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
+                            lines = []
+                            feedback = float('nan')
+                            word_done = False
+                        
+                        #wr.writerow([new_time,new_child,new_name,new_score,new_ischouchou,feedback])
+
+                        string = str(found_demo.group("path"))#[:-1]
                         name = found_demo.group("letter")
                         time = found_demo.group("time")
                         ischouchou = child in chouchou
                         try:
-                            path = np.array(literal_eval(string.replace('"','')))
+                            path = np.array(literal_eval(string))#.replace('"','')))
                             graph = Stroke()
                             graph.stroke_from_xxyy(path)
                             graph.downsampleShape(70)
@@ -119,11 +262,486 @@ if __name__ == "__main__":
                                 prev_strokes[name].stroke_from_xxyy(path)
                                 prev_strokes[name].downsampleShape(70)
 
-                            wr.writerow([time,child,name,score,ischouchou,feedback])
+                            liste = []
+                            liste.append(time)
+                            liste.append(child)
+                            liste.append(name)
+                            liste.append(score)
+                            liste.append(ischouchou)
+                            lines.append(liste)
+                            #wr.writerow([time,child,name,score,ischouchou,feedback])
                         
 
                         except SyntaxError:
-                            pass
-                    if found_button or found_demo:
-                        feedback = copy.copy(new_feedback)
+                            if found_demo_bug:
+                                string_bug = str(found_demo_bug.group("path1"))
+                                bug_on_last_line = True
+                                bug_variables.append(time)
+                                bug_variables.append(name)
+                                bug_variables.append(ischouchou)
+
+                                '''
+                                string2 = str(found_demo_bug.group("path2"))
+                                string = string1+string2
+                                try:
+                                    path = np.array(literal_eval(string))
+                                    graph = Stroke()
+                                    graph.stroke_from_xxyy(path)
+                                    graph.downsampleShape(70)
+                                    
+                                    if name in prev_strokes:
+                                        _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                        prev_strokes[name].reset()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+                                    else:
+                                        score = -1.
+                                        prev_strokes[name]=Stroke()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+
+                                    liste = []
+                                    liste.append(time)
+                                    liste.append(child)
+                                    liste.append(name)
+                                    liste.append(score)
+                                    liste.append(ischouchou)
+                                    lines.append(liste)
+                                except SyntaxError:
+                                    if child=='oscar':
+                                        print "bug found"
+                                        print string'''
+                            else:
+                                if child=='oscar':
+                                    print "bug not found"
+                                    print string
+
+
+
+
+
+                    #if found_button or found_word or found_repetition:
+                    #    feedback = copy.copy(new_feedback)
+
+            #wr.writerow([new_time,new_child,new_name,new_score,new_ischouchou,feedback])
+            for liste in lines:
+                wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
+            lines = []
+
+
+    ######### session 2 :
+        prev_strokes = {}
+
+        i = 0
+        feedback = float('nan')
+        new_time = ""
+        new_child = ""
+        new_name = ""
+        new_score = 0
+        new_ischouchou = False
+        
+        word_done = False
+        bug_on_last_line = False
+        string_bug = ""
+        bug_variables = []
+
+        lines = []
+
+
+        with open(child+'_s2.csv', 'wb') as csvfile:
+            wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+
+            with open(log_path2, 'r') as log:
+
+                for line in log.readlines():
+
+                    found_demo = new_demo.search(line)
+                    found_button = new_button.search(line)
+                    found_word = new_word.search(line)
+                    found_repetition = new_repetition.search(line)
+                    found_demo_bug = new_demo_bug.search(line)
+                    found_demo_bug2 = new_demo_bug2.search(line)
+
+                    if found_repetition:
+                        word_done = True
+
+                    if found_word:
+                        word = str(found_word.group("word"))[:-1]
+                        if word_done:
+                            for liste in lines:
+                                wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
+                            lines = []
+                            feedback = float('nan')
+                            word_done = False
+
+                    if found_button:
+                        
+                        if str(found_button.group("button"))=="+":
+                            if math.isnan(feedback):
+                                feedback = 1
+                            else:
+                                feedback += 1
+                        else:
+                            if math.isnan(feedback):
+                                feedback = -1
+                            else:
+                                feedback -= 1
+
+                    if bug_on_last_line:
+                        # empty bug_variables
+                        # bugonlasttime = false
+                        if found_demo_bug2:
+                            string2 = str(found_demo_bug2.group("path2"))
+                            string = string_bug+string2
+                            time = bug_variables[0]
+                            name = bug_variables[1]
+                            ischouchou = bug_variables[2]
+                            try:
+                                path = np.array(literal_eval(string))#.replace('"','')))
+                                graph = Stroke()
+                                graph.stroke_from_xxyy(path)
+                                graph.downsampleShape(70)
+                                
+                                if name in prev_strokes:
+                                    _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                    prev_strokes[name].reset()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+                                else:
+                                    score = -1.
+                                    prev_strokes[name]=Stroke()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+
+                                liste = []
+                                liste.append(time)
+                                liste.append(child)
+                                liste.append(name)
+                                liste.append(score)
+                                liste.append(ischouchou)
+                                lines.append(liste)
+                            except SyntaxError:
+                                if child=='oscar':
+                                    print 'second_bug_not_translated'
+                                    print string_bug
+                                    print string2
+                        else:
+                            if child=='oscar':
+                                print 'second_bug_not_found'
+                                print line
+
+                        bug_on_last_line = False
+                        bug_variables = []
+    
+
+
+                    if found_demo :
+
+                        if word_done:
+                            for liste in lines:
+                                wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
+                            lines = []
+                            feedback = float('nan')
+                            word_done = False
+                        
+                        #wr.writerow([new_time,new_child,new_name,new_score,new_ischouchou,feedback])
+
+                        string = str(found_demo.group("path"))#[:-1]
+                        name = found_demo.group("letter")
+                        time = found_demo.group("time")
+                        ischouchou = child in chouchou
+                        try:
+                            path = np.array(literal_eval(string))#.replace('"','')))
+                            graph = Stroke()
+                            graph.stroke_from_xxyy(path)
+                            graph.downsampleShape(70)
+                            
+                            if name in prev_strokes:
+                                _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                prev_strokes[name].reset()
+                                prev_strokes[name].stroke_from_xxyy(path)
+                                prev_strokes[name].downsampleShape(70)
+                            else:
+                                score = -1.
+                                prev_strokes[name]=Stroke()
+                                prev_strokes[name].stroke_from_xxyy(path)
+                                prev_strokes[name].downsampleShape(70)
+
+                            liste = []
+                            liste.append(time)
+                            liste.append(child)
+                            liste.append(name)
+                            liste.append(score)
+                            liste.append(ischouchou)
+                            lines.append(liste)
+                            #wr.writerow([time,child,name,score,ischouchou,feedback])
+                        
+
+                        except SyntaxError:
+                            if found_demo_bug:
+                                string_bug = str(found_demo_bug.group("path1"))
+                                bug_on_last_line = True
+                                bug_variables.append(time)
+                                bug_variables.append(name)
+                                bug_variables.append(ischouchou)
+
+                                '''
+                                string2 = str(found_demo_bug.group("path2"))
+                                string = string1+string2
+                                try:
+                                    path = np.array(literal_eval(string))
+                                    graph = Stroke()
+                                    graph.stroke_from_xxyy(path)
+                                    graph.downsampleShape(70)
+                                    
+                                    if name in prev_strokes:
+                                        _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                        prev_strokes[name].reset()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+                                    else:
+                                        score = -1.
+                                        prev_strokes[name]=Stroke()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+
+                                    liste = []
+                                    liste.append(time)
+                                    liste.append(child)
+                                    liste.append(name)
+                                    liste.append(score)
+                                    liste.append(ischouchou)
+                                    lines.append(liste)
+                                except SyntaxError:
+                                    if child=='oscar':
+                                        print "bug found"
+                                        print string'''
+                            else:
+                                if child=='oscar':
+                                    print "bug not found"
+                                    print string
+
+
+
+
+
+                    #if found_button or found_word or found_repetition:
+                    #    feedback = copy.copy(new_feedback)
+
+            #wr.writerow([new_time,new_child,new_name,new_score,new_ischouchou,feedback])
+            for liste in lines:
+                wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
+            lines = []
+
+
+
+    # children with 1 session :
+
+    for child in children_x1:
+        log_path1 = load_log1(child)
+
+        prev_strokes = {}
+
+        i = 0
+        feedback = float('nan')
+        new_time = ""
+        new_child = ""
+        new_name = ""
+        new_score = 0
+        new_ischouchou = False
+        
+        word_done = False
+        bug_on_last_line = False
+        string_bug = ""
+        bug_variables = []
+
+        lines = []
+
+
+        with open(child+'.csv', 'wb') as csvfile:
+            wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+
+            with open(log_path1, 'r') as log:
+
+                for line in log.readlines():
+
+                    found_demo = new_demo.search(line)
+                    found_button = new_button.search(line)
+                    found_word = new_word.search(line)
+                    found_repetition = new_repetition.search(line)
+                    found_demo_bug = new_demo_bug.search(line)
+                    found_demo_bug2 = new_demo_bug2.search(line)
+
+                    if found_repetition:
+                        word_done = True
+
+                    if found_word:
+                        word = str(found_word.group("word"))[:-1]
+                        if word_done:
+                            for liste in lines:
+                                wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
+                            lines = []
+                            feedback = float('nan')
+                            word_done = False
+
+                    if found_button:
+                        
+                        if str(found_button.group("button"))=="+":
+                            if math.isnan(feedback):
+                                feedback = 1
+                            else:
+                                feedback += 1
+                        else:
+                            if math.isnan(feedback):
+                                feedback = -1
+                            else:
+                                feedback -= 1
+
+                    if bug_on_last_line:
+                        # empty bug_variables
+                        # bugonlasttime = false
+                        if found_demo_bug2:
+                            string2 = str(found_demo_bug2.group("path2"))
+                            string = string_bug+string2
+                            time = bug_variables[0]
+                            name = bug_variables[1]
+                            ischouchou = bug_variables[2]
+                            try:
+                                path = np.array(literal_eval(string))#.replace('"','')))
+                                graph = Stroke()
+                                graph.stroke_from_xxyy(path)
+                                graph.downsampleShape(70)
+                                
+                                if name in prev_strokes:
+                                    _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                    prev_strokes[name].reset()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+                                else:
+                                    score = -1.
+                                    prev_strokes[name]=Stroke()
+                                    prev_strokes[name].stroke_from_xxyy(path)
+                                    prev_strokes[name].downsampleShape(70)
+
+                                liste = []
+                                liste.append(time)
+                                liste.append(child)
+                                liste.append(name)
+                                liste.append(score)
+                                liste.append(ischouchou)
+                                lines.append(liste)
+                            except SyntaxError:
+                                if child=='oscar':
+                                    print 'second_bug_not_translated'
+                                    print string_bug
+                                    print string2
+                        else:
+                            if child=='oscar':
+                                print 'second_bug_not_found'
+                                print line
+
+                        bug_on_last_line = False
+                        bug_variables = []
+    
+
+
+                    if found_demo :
+
+                        if word_done:
+                            for liste in lines:
+                                wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
+                            lines = []
+                            feedback = float('nan')
+                            word_done = False
+                        
+                        #wr.writerow([new_time,new_child,new_name,new_score,new_ischouchou,feedback])
+
+                        string = str(found_demo.group("path"))#[:-1]
+                        name = found_demo.group("letter")
+                        time = found_demo.group("time")
+                        ischouchou = child in chouchou
+                        try:
+                            path = np.array(literal_eval(string))#.replace('"','')))
+                            graph = Stroke()
+                            graph.stroke_from_xxyy(path)
+                            graph.downsampleShape(70)
+                            
+                            if name in prev_strokes:
+                                _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                prev_strokes[name].reset()
+                                prev_strokes[name].stroke_from_xxyy(path)
+                                prev_strokes[name].downsampleShape(70)
+                            else:
+                                score = -1.
+                                prev_strokes[name]=Stroke()
+                                prev_strokes[name].stroke_from_xxyy(path)
+                                prev_strokes[name].downsampleShape(70)
+
+                            liste = []
+                            liste.append(time)
+                            liste.append(child)
+                            liste.append(name)
+                            liste.append(score)
+                            liste.append(ischouchou)
+                            lines.append(liste)
+                            #wr.writerow([time,child,name,score,ischouchou,feedback])
+                        
+
+                        except SyntaxError:
+                            if found_demo_bug:
+                                string_bug = str(found_demo_bug.group("path1"))
+                                bug_on_last_line = True
+                                bug_variables.append(time)
+                                bug_variables.append(name)
+                                bug_variables.append(ischouchou)
+
+                                '''
+                                string2 = str(found_demo_bug.group("path2"))
+                                string = string1+string2
+                                try:
+                                    path = np.array(literal_eval(string))
+                                    graph = Stroke()
+                                    graph.stroke_from_xxyy(path)
+                                    graph.downsampleShape(70)
+                                    
+                                    if name in prev_strokes:
+                                        _,score = stroke.euclidian_distance(prev_strokes[name], graph)
+                                        prev_strokes[name].reset()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+                                    else:
+                                        score = -1.
+                                        prev_strokes[name]=Stroke()
+                                        prev_strokes[name].stroke_from_xxyy(path)
+                                        prev_strokes[name].downsampleShape(70)
+
+                                    liste = []
+                                    liste.append(time)
+                                    liste.append(child)
+                                    liste.append(name)
+                                    liste.append(score)
+                                    liste.append(ischouchou)
+                                    lines.append(liste)
+                                except SyntaxError:
+                                    if child=='oscar':
+                                        print "bug found"
+                                        print string'''
+                            else:
+                                if child=='oscar':
+                                    print "bug not found"
+                                    print string
+
+
+
+
+
+                    #if found_button or found_word or found_repetition:
+                    #    feedback = copy.copy(new_feedback)
+
+            #wr.writerow([new_time,new_child,new_name,new_score,new_ischouchou,feedback])
+            for liste in lines:
+                wr.writerow([liste[0],liste[1],liste[2],liste[3],liste[4],feedback])
+            lines = []
+
+
 
