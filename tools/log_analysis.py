@@ -34,7 +34,7 @@ installDirectory = fileName.split('/lib')[0]
 refDirectory =  installDirectory + '/share/shape_learning/letter_model_datasets/bad_letters'
 
 def read_ref_data(refDirectory, line_of_ref):
-
+https://www.facebook.com/thefandomcornerofficial/videos/419221884952327/?autoplay_reason=gatekeeper&video_container_type=0&app_id=2392950137
     ref_letters = {}
     datasets = glob.glob(refDirectory + '/*.dat')
     for dataset in datasets:

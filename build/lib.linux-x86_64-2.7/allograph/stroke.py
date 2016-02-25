@@ -36,6 +36,25 @@ class Stroke:
         self.y.append(y)
         self.len+=1
 
+    def __add__(self, stroke2):
+        x1 = np.copy(np.array(self.x))
+        x2 = np.array(stroke2.x)
+        y1 = np.copy(np.array(self.y))
+        y2 = np.array(stroke2.y)
+        return Stroke(x1+x2,y1+y2)
+
+    def __sub__(self, stroke2):
+        x1 = np.copy(np.array(self.x))
+        x2 = np.array(stroke2.x)
+        y1 = np.copy(np.array(self.y))
+        y2 = np.array(stroke2.y)
+        return Stroke(x1-x2,y1-y2)
+
+    def __mul__(self, num):
+        x1 = np.copy(np.array(self.x))
+        y1 = np.copy(np.array(self.y))
+        return Stroke(x1*num,y1*num)
+
     def reset(self):
         self.x = []
         self.y = []
@@ -99,18 +118,22 @@ class Stroke:
     def euclidian_length(self):
         """comput length of the shape """
 
-        shape_length = 0
-        last_x = self.x
-        last_y = self.y
-        scale = [0]
-        for i in range(self.len-1):
-            x = np.array(self.x[i+1])
-            y = np.array(self.y[i+1])
-            last_x = np.array(self.x[i])
-            last_y = np.array(self.y[i])
-            shape_length += np.sqrt((x-last_x)**2 + (y-last_y)**2)
-            scale.append(shape_length)
-        return shape_length, scale
+        if self.get_len()>1:
+            shape_length = 0
+            last_x = self.x
+            last_y = self.y
+            scale = [0]
+            for i in range(self.len-2):
+                x = np.array(self.x[i+1])
+                y = np.array(self.y[i+1])
+                last_x = np.array(self.x[i])
+                last_y = np.array(self.y[i])
+                shape_length += np.sqrt((x-last_x)**2 + (y-last_y)**2)
+                scale.append(shape_length)
+            return shape_length, scale
+
+        else:
+            return 0,[0]
 
 
     def uniformize(self):
@@ -271,13 +294,44 @@ class Stroke:
                 current_stroke.append(x2,y2)
                 if triangle_ratio>treshold:
                     splited_strokes.append(current_stroke)
-                    current_stroke = Stroke()
+                    current_stroke.reset()
             if current_stroke.get_x():
                 splited_strokes.append(current_stroke)
 
             return splited_strokes
         else:
-            return self
+            return [self]
+
+    def split_by_density(self,treshold=3):
+        """H -> |-| """
+
+        splited_strokes = []
+        current_stroke = Stroke()
+
+        stroke_length,_ = self.euclidian_length()
+
+        mean_dist = stroke_length/(self.get_len()+0.000001)
+
+        if len(self.x)>3:
+            current_stroke.append(self.x[0],self.y[0])
+            for i in range(len(self.x)-2):
+                x1 = float(self.x[i])
+                x2 = float(self.x[i+1])
+                y1 = float(self.y[i])
+                y2 = float(self.y[i+1])
+                dist = np.sqrt((x1-x2)**2+(y1-y2)**2)
+                density = dist/mean_dist
+                current_stroke.append(x2,y2)
+                if density>3:
+                    splited_strokes.append(current_stroke)
+                    current_stroke.reset()
+            if current_stroke.get_x():
+                splited_strokes.append(current_stroke)
+
+            return splited_strokes
+        else:
+            return [self]
+
 
 # static functions:
 #------------------
@@ -584,11 +638,14 @@ def euclidian_distance(stroke1, stroke2):
 
     d = np.sqrt((x1-x2)**2+(y1-y2)**2)
     m = d-np.min(d)
-    return np.mean(d), np.mean(m)
+    if np.mean(m)<0:
+        return 0,0
+    else:
+        return np.mean(d), np.mean(m)
 
 def identify(strokes, stroke, closest=True):
     """ look for the best matching postion of a stroke inside a concatenation of a multistroke drawing """
-
+    
     # better : 1) unifore stroke/stroke ~ relative distance, 2) concatenate
 
     stroke_length,_ = stroke.euclidian_length()
@@ -629,7 +686,7 @@ def identify(strokes, stroke, closest=True):
     #print best_score
 
     split_points = draw.split_non_differentiable_points(1.5)
-
+    
     #plt.plot(draw.x,draw.y,'bo')
     #plt.plot(draw.x[pose:pose+stroke.len],draw.y[pose:pose+stroke.len],'rs')
     #plt.plot(split_points.x,split_points.y,'gs')
@@ -644,15 +701,47 @@ def compare(strokes1, strokes2):
     """ takes two multistrokes drawing, alignes them and then compute the euclidian distance """
 
     score = 0
-    for stroke in strokes1:
-        _,_,match = identify(strokes2,stroke)
+    for stroke_i in strokes1:
+        match = identify(strokes2,stroke_i)
         score += match
     
-    draw1 = concat(strokes1)
-    draw2 = concat(strokes2)
-    draw1_length,_ = draw1.euclidian_length()
-    draw2_length,_ = draw2.euclidian_length()
+    #draw1 = concat(strokes1)
+    #draw2 = concat(strokes2)
+    #draw1_length,_ = draw1.euclidian_length()
+    #draw2_length,_ = draw2.euclidian_length()
 
-    tot_length = draw1_length# + draw2_length
+    #tot_length = draw1_length# + draw2_length
 
-    return 100*score/tot_length
+    return score
+
+def cloud_dist(stroke1, stroke2):
+    
+    couples = set()
+    distance = 0
+    # 1 --> 2
+    for i in range(len(stroke1.x)):
+        dists_x = np.array(stroke2.x)-stroke1.x[i]
+        dists_y = np.array(stroke2.y)-stroke1.y[i]
+        dists = np.sqrt(dists_x**2+dists_y**2)
+        val = np.min(dists)
+        j = np.argmin(dists)
+        if (i,j) in couples:
+            pass
+        else:
+            distance += val
+            couples.add((i,j))
+    # 2 --> 1
+    for j in range(len(stroke2.x)):
+        dists_x = np.array(stroke1.x)-stroke2.x[i]
+        dists_y = np.array(stroke1.y)-stroke2.y[i]
+        dists = np.sqrt(dists_x**2+dists_y**2)
+        val = np.min(dists)
+        i = np.argmin(dists)
+        if (i,j) in couples:
+            pass
+        else:
+            distance += val
+            couples.add((i,j))
+
+    return distance/float(len(couples))
+ 
