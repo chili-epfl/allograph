@@ -35,7 +35,7 @@ class Stroke:
         self.x.append(x)
         self.y.append(y)
         self.len+=1
-
+		
     def __add__(self, stroke2):
         x1 = np.copy(np.array(self.x))
         x2 = np.array(stroke2.x)
@@ -67,6 +67,7 @@ class Stroke:
 
     def plot(self):
         plt.plot(self.x,-np.array(self.y),'b')
+        plt.show()
         #plt.plot(self.x,self.y,'r.')
 
     def multi_strokes_plot(self):
@@ -107,7 +108,6 @@ class Stroke:
             t_current_y = np.linspace(0, 1, len(self.y))
             t_desired_x = np.linspace(0, 1, numDesiredPoints)
             t_desired_y = np.linspace(0, 1, numDesiredPoints)
-
             f = interpolate.interp1d(t_current_x, self.x, kind='linear')
             self.x = f(t_desired_x).tolist()
             f = interpolate.interp1d(t_current_y, self.y, kind='linear')
@@ -116,7 +116,7 @@ class Stroke:
             self.len = numDesiredPoints
 
     def euclidian_length(self):
-        """comput length of the shape """
+        """ comput length of the shape """
 
         if self.get_len()>1:
             shape_length = 0
@@ -332,6 +332,16 @@ class Stroke:
         else:
             return [self]
 
+	def childFromRobot(self, RobotStrokes):
+		childStrokes = []
+		currentStroke = Stroke()
+		for i in range(0, len(RobotStrokes)-2):
+			currentStroke.reset()
+			currentStroke = RobotStrokes[i+1].sub(RobotStrokes[i])
+			currentStroke = currentStroke.mul(2)
+			currentStroke = currentStroke.add(RobotStrokes[i])
+			childStrokes.append(currentStroke)
+		return childStrokes
 
 # static functions:
 #------------------
@@ -629,7 +639,8 @@ def align(stroke1, stroke2):
     return x1, y1, d, new_d, m, new_m
 
 def euclidian_distance(stroke1, stroke2):
-    """the euclidian distance between two strokes"""
+    """the euclidian distance between two strokes
+    with same sizes"""
 
     x1 = np.array(stroke1.x)
     x2 = np.array(stroke2.x)

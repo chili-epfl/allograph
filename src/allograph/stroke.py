@@ -35,7 +35,7 @@ class Stroke:
         self.x.append(x)
         self.y.append(y)
         self.len+=1
-
+		
     def __add__(self, stroke2):
         x1 = np.copy(np.array(self.x))
         x2 = np.array(stroke2.x)
@@ -67,6 +67,7 @@ class Stroke:
 
     def plot(self):
         plt.plot(self.x,-np.array(self.y),'b')
+        plt.show()
         #plt.plot(self.x,self.y,'r.')
 
     def multi_strokes_plot(self):
@@ -107,7 +108,6 @@ class Stroke:
             t_current_y = np.linspace(0, 1, len(self.y))
             t_desired_x = np.linspace(0, 1, numDesiredPoints)
             t_desired_y = np.linspace(0, 1, numDesiredPoints)
-
             f = interpolate.interp1d(t_current_x, self.x, kind='linear')
             self.x = f(t_desired_x).tolist()
             f = interpolate.interp1d(t_current_y, self.y, kind='linear')
@@ -116,7 +116,7 @@ class Stroke:
             self.len = numDesiredPoints
 
     def euclidian_length(self):
-        """comput length of the shape """
+        """ comput length of the shape """
 
         if self.get_len()>1:
             shape_length = 0
@@ -302,8 +302,8 @@ class Stroke:
         else:
             return [self]
 
-    def split_by_density(self,treshold=3):
-        """H -> |-| """
+	def split_by_density(self,treshold=3):
+		"""H -> |-| """
 
         splited_strokes = []
         current_stroke = Stroke()
@@ -332,10 +332,21 @@ class Stroke:
         else:
             return [self]
 
-
 # static functions:
 #------------------
-
+def childFromRobot(RobotStrokes):
+	childStrokes = []
+	currentStroke = Stroke()
+	for i in range(len(RobotStrokes)-1):
+		currentStroke = RobotStrokes[i+1].__sub__(RobotStrokes[i])
+		currentStroke = currentStroke.__mul__(2)
+		currentStroke = currentStroke.__add__(RobotStrokes[i])
+		childStrokes.append(currentStroke)
+	return childStrokes
+	
+def strokeToArray(aStroke):
+	return (np.append(np.array(aStroke.x),np.array(aStroke.y)) )
+		
 def plot_list(strokes):
 
     length = len(strokes)
