@@ -2,6 +2,7 @@ import stroke
 import learning_manager as lm
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
+from sklearn.externals.six.moves import xrange
 import numpy as np
 from sklearn import metrics
 
@@ -77,11 +78,12 @@ def main():
             letters.append(stroke.strokeToArray(aStroke))
     print len(letters)
 
+	#SCALING
     letters = StandardScaler().fit_transform(letters)
 
     """Compute DBSCAN"""
 
-    db = DBSCAN(eps=5.0, min_samples=4).fit(letters)
+    db = DBSCAN(eps=0.3, min_samples=1.0).fit(letters)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
@@ -90,16 +92,17 @@ def main():
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
     print('Estimated number of clusters: %d' % n_clusters_)
-    # ~ print("Silhouette Coefficient: %0.3f"
-    # ~ % metrics.silhouette_score(letters, labels))
+    
 
     centroidStrokes = []
-
+	
     """create strokes from centroids to be able to plot them easily"""
+   
     clusters = [letters[labels == i] for i in xrange(n_clusters_)]
     print len(clusters)
     for cluster in clusters:
         # ~ for centroid in cluster:
+        print len(cluster)
         newStroke = stroke.Stroke()
         newStroke.stroke_from_xxyy(cluster[0])
         newStroke.downsampleShape(70)

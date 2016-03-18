@@ -4,6 +4,7 @@
 import stroke
 import learning_manager as lm
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
 
@@ -79,6 +80,8 @@ def main():
         for aStroke in strokes[key]:
             letters.append(stroke.strokeToArray(aStroke))
     print len(letters)
+    
+    
     estimator = KMeans(n_clusters=computeNumberCentroids(letters), init='k-means++')
     # ~ estimator = KMeans(n_clusters=8,init='k-means++')
 
