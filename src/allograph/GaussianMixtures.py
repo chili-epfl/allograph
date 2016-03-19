@@ -82,7 +82,7 @@ def main():
 	minCluster = 1;
 	for i in range(1,100):
 		
-		gmm = GMM(n_components=i)
+		gmm = DPGMM(n_components=i)
 		gmm.fit(letters)
 		BIC = gmm.bic(np.array(letters))
 		if (BIC < minBIC):
@@ -91,7 +91,7 @@ def main():
 
 	print minCluster
 	
-	gmm = GMM(n_components=minCluster)
+	gmm = DPGMM(n_components=minCluster)
 	labels = gmm.fit_predict(letters)
 	print labels
 	

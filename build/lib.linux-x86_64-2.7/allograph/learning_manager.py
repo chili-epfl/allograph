@@ -125,7 +125,7 @@ def read_data(datasetDirectory, lines_to_jump):
                             shape = np.reshape(shape, (-1, 1))
                             data_stroke = Stroke()
                             data_stroke.stroke_from_xxyy(np.reshape(shape,len(shape)))
-                            #data_stroke.uniformize()
+                            data_stroke.uniformize()
                             try:
                                 data_stroke.normalize_wrt_max()
                             except ValueError:

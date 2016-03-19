@@ -56,13 +56,13 @@ def main():
     lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_loulwa_anais", 0)[
         'a']
     strokes["Markus"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_markus", 0)['a']
+		lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_markus", 0)['a']
     strokes["OsborneAmelia"] = lm.read_data(
-        "/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_osborne_amelia_enzoV", 0)['a']
+		"/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_osborne_amelia_enzoV", 0)['a']
     strokes["Oscar"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_oscar", 0)['a']
+	lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_oscar", 0)['a']
     strokes["WilliamRin"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_william_rin", 0)['a']
+	lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_william_rin", 0)['a']
 
     # ~ """Initialize Object KMeans that is goind to be used to find centroids on children's tries"""
     # ~ estimator = KMeans(init='k-means++')
@@ -71,15 +71,25 @@ def main():
 
     """Get the children's strokes from the robot's"""
     for key in strokes:
-        strokes[key] = stroke.childFromRobot(strokes[key])
+	    strokes[key] = stroke.childFromRobot(strokes[key])
 
     """Build an array of all the strokes of all the children"""
     letters = []
-    for key in strokes:
-        print key
-        for aStroke in strokes[key]:
-            letters.append(stroke.strokeToArray(aStroke))
+    #~ print "x"
+    #~ print strokes["WilliamRin"][0].get_x()
+    #~ print "y"
+    #~ print strokes["WilliamRin"][0].get_y()
+    print strokes["WilliamRin"][0].strokeToImage(10)
+    print strokes["WilliamRin"][1].strokeToImage(10)
+    print strokes["WilliamRin"][2].strokeToImage(10)
+    print strokes["WilliamRin"][3].strokeToImage(10)
+	
     print len(letters)
+    
+    for key in strokes:
+	for aStroke in strokes[key]:
+	    letters.append(stroke.strokeToArray(aStroke))
+			
     
     
     estimator = KMeans(n_clusters=computeNumberCentroids(letters), init='k-means++')
@@ -99,8 +109,8 @@ def main():
         centroidStrokes.append(newStroke)
 
     """Plot the centroids"""
-    for aCentroid in centroidStrokes:
-        aCentroid.plot()
+    #~ for aCentroid in centroidStrokes:
+        #~ aCentroid.plot()
 
 
 def computeNumberCentroids(letters):

@@ -55,7 +55,30 @@ class Stroke:
         x1 = np.copy(np.array(self.x))
         y1 = np.copy(np.array(self.y))
         return Stroke(x1 * num, y1 * num)
-
+        
+    def strokeToImage(self, dimension):
+	image = np.zeros(shape=(dimension,dimension))
+	scale = max((max(self.get_x())-min(self.get_x())),(max(self.get_y())-min(self.get_y())))
+	scaleFactor = dimension / scale
+	prev_i = 0.0
+	prev_j = 0.0
+	first = true;
+	for i,j in (zip(self.get_x(),self.get_y())):
+	    i = int(i*scaleFactor)
+	    j = int(i*scaleFactor)
+	    prev_i = i
+	    prev_j = j
+	    image[i,j] = 1
+	    if (first):
+		first = false
+		continue
+	    diff_i = i - prev_i
+	    diff_j = j - prev_j
+	    if (diff_j >= diff_i):
+		for col in range(prev_i,i):
+		    
+	return image
+		    
     def reset(self):
         self.x = []
         self.y = []
@@ -273,7 +296,7 @@ class Stroke:
 
         self.x = x.tolist()
         self.y = y.tolist()
-
+        
     def split_non_differentiable_points(self, treshold=1.5):
         """ V --> \+/ """
 
@@ -331,6 +354,7 @@ class Stroke:
             return splited_strokes
         else:
             return [self]
+   
 
 
 # static functions:
@@ -348,7 +372,7 @@ def childFromRobot(RobotStrokes):
 
 def strokeToArray(aStroke):
     return (np.append(np.array(aStroke.x), np.array(aStroke.y)))
-
+	
 
 def plot_list(strokes):
     length = len(strokes)
