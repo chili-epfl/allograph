@@ -58,10 +58,68 @@ class Stroke:
         
     def strokeToImage(self, dimension):
 	image = np.zeros(shape=(dimension,dimension))
-	scale = max((max(self.get_x())-min(self.get_x())),(max(self.get_y())-min(self.get_y())))
-	scaleFactor = dimension / scale
+	#~ scale = max((max(self.get_x())-min(self.get_x())),(max(self.get_y())-min(self.get_y())))
+	#~ print scale
+	#~ scaleFactor = dimension / scale
+	#~ print scaleFactor
+	self.normalize_wrt_max()
+	prev_i = 0.0
+	prev_j = 0.0
+	first = True
 	for i,j in (zip(self.get_x(),self.get_y())):
-	    image[int(i*scaleFactor),int(j*scaleFactor)] = 1
+	    #~ i = int(i*scaleFactor)
+	    #~ j = int(i*scaleFactor)
+	    i = int(i*(dimension-1))
+	    j = int(j*(dimension-1))
+	    #~ print i 
+	    #~ print j
+	    image[j,i] = 1
+	    
+	    if (first):
+		first = False
+		prev_i = i
+		prev_j = j
+		continue
+
+	    diff_i = i - prev_i
+	    diff_j = j - prev_j
+	    
+	    
+	    if (diff_j >= diff_i):
+		
+		if (diff_i != 0):
+		    ratio = int(diff_j/diff_i)
+		else: 
+		    ratio = diff_j
+		
+		current_j = prev_j
+		for col in range(prev_i,i):
+		    if (ratio >= 0):
+			for row in range(current_j,current_j+ratio):
+			    image[row,col] = 1
+		    else: 
+			for row in range(current_j,current_j+ratio,-1):
+			    image[row,col] = 1
+		    current_j += ratio;
+	    else:
+		
+		if(diff_j != 0):
+		    ratio = int(diff_i/diff_j)
+		else:
+		    ratio = diff_i
+		
+		current_i = prev_i
+		for row in range(prev_j,j):
+		    if (ratio >= 0):
+			for col in range(current_i,current_i+ratio):
+			    image[row,col] = 1
+		    else:
+			for col in range(current_i,current_i+ratio, -1):
+			    image[row,col] = 1
+		    current_i += ratio
+		    
+	    prev_i = i
+	    prev_j = j
 	return image
 		    
     def reset(self):

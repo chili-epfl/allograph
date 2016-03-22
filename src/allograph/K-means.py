@@ -4,6 +4,7 @@
 import stroke
 import learning_manager as lm
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
@@ -79,10 +80,18 @@ def main():
     #~ print strokes["WilliamRin"][0].get_x()
     #~ print "y"
     #~ print strokes["WilliamRin"][0].get_y()
-    print strokes["WilliamRin"][0].strokeToImage(10)
-    print strokes["WilliamRin"][1].strokeToImage(10)
-    print strokes["WilliamRin"][2].strokeToImage(10)
-    print strokes["WilliamRin"][3].strokeToImage(10)
+    #~ np.set_printoptions(threshold='nan')
+    #~ plt.imshow(strokes["WilliamRin"][0].strokeToImage(100))
+    #~ plt.show()
+    #~ plt.imshow(strokes["WilliamRin"][1].strokeToImage(100))
+    #~ plt.show()
+    #~ plt.imshow(strokes["WilliamRin"][2].strokeToImage(100))
+    #~ plt.show()
+    #~ plt.imshow(strokes["WilliamRin"][3].strokeToImage(100))
+    #~ plt.show()
+    #~ print strokes["WilliamRin"][1].strokeToImage(15)
+    #~ print strokes["WilliamRin"][2].strokeToImage(15)
+    #~ print strokes["WilliamRin"][3].strokeToImage(15)
 	
     print len(letters)
     
@@ -109,8 +118,10 @@ def main():
         centroidStrokes.append(newStroke)
 
     """Plot the centroids"""
-    #~ for aCentroid in centroidStrokes:
-        #~ aCentroid.plot()
+    for aCentroid in centroidStrokes:
+		#~ aCentroid.plot()
+		plt.imshow(aCentroid.strokeToImage(100), cmap="Greys")
+		plt.show()
 
 
 def computeNumberCentroids(letters):
