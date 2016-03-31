@@ -97,12 +97,12 @@ class Stroke:
 			diff_i = i - prev_i
 			diff_j = j - prev_j
 	    
-			"""First case:"""
-			if (abs(diff_j) > abs(diff_i)):
-		
+			if (abs(diff_j) >= abs(diff_i)):
 				current_j = prev_j
 				if (diff_i != 0):
 					ratio = int(diff_j/abs(diff_i))
+					if (ratio == 0):
+						continue
 					sign_i = diff_i/abs(diff_i)
 					for col in range(prev_i, i, sign_i):
 						for row in range(current_j,current_j+ratio, ratio/abs(ratio)):
@@ -113,14 +113,15 @@ class Stroke:
 						continue
 					ratio = diff_j
 					for row in range(current_j,current_j + ratio, ratio/abs(ratio)):
-						image[row,i] = 1
-					current_j += ratio;
+						image[row,prev_i] = 1
 		
 			
 			else:
 				current_i = prev_i
 				if(diff_j != 0):
 					ratio = int(diff_i/abs(diff_j))
+					if (ratio == 0):
+						continue
 					sign_j = diff_j/abs(diff_j)
 					for row in range(prev_j, j, sign_j):
 						for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
@@ -131,8 +132,7 @@ class Stroke:
 						continue
 					ratio = diff_i
 					for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
-						image[j,col] = 1
-					current_i += ratio
+						image[prev_j,col] = 1
 		
 		    
 			prev_i = i

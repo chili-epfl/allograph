@@ -4,6 +4,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 from sklearn.externals.six.moves import xrange
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn import metrics
 
 
@@ -11,56 +12,7 @@ def main():
     """/////////////////////////////////////////////////////////INITIALIZATION//////////////////////////////////////////////////////////////////////////"""
 
     """ Create dictionnary : for a child -> strokes of the robot from the .dat files a the letter a"""
-    strokes = {}
-    strokes["Adele"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/Normandie/robot_progress/with_adele", 0)['a']
-    strokes["Alexandre"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/Normandie/robot_progress/with_alexandre", 0)['a']
-    strokes["Enzo"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/Normandie/robot_progress/with_enzo", 0)['a']
-    strokes["Jonathan"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/Normandie/robot_progress/with_jonathan", 0)['a']
-    strokes["Matenzo"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/Normandie/robot_progress/with_matenzo", 0)['a']
-    strokes["Mona"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/Normandie/robot_progress/with_mona", 0)['a']
-    strokes["Nathan"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/Normandie/robot_progress/with_nathan", 0)['a']
-    strokes["Valentine"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/Normandie/robot_progress/with_valentine", 0)['a']
-    strokes["Avery"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_avery", 0)['a']
-    strokes["Dan"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_dan", 0)['a']
-    strokes["DanielEge"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_daniel_ege", 0)['a']
-    strokes["Gaia"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_gaia", 0)['a']
-    strokes["Ines"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_ines", 0)['a']
-    strokes["JacquelineNadine"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_jacqueline_nadine",
-                 0)['a']
-    strokes["Jake"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_jake", 0)['a']
-    strokes["LaithKayra"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_laith_kayra", 0)['a']
-    strokes["Lamonie"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_lamonie", 0)['a']
-    strokes["LilaLudovica"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_lila_ludovica", 0)[
-        'a']
-    strokes["loulwaAnais"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_loulwa_anais", 0)[
-        'a']
-    strokes["Markus"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_markus", 0)['a']
-    strokes["OsborneAmelia"] = lm.read_data(
-        "/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_osborne_amelia_enzoV", 0)['a']
-    strokes["Oscar"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_oscar", 0)['a']
-    strokes["WilliamRin"] = \
-    lm.read_data("/home/guillaume/Documents/Projet CHILI/cowriter_logs/EIntGen/robot_progress/with_william_rin", 0)['a']
+    strokes = buildStrokeCollection("/home/gdevecchi/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/gdevecchi/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",'a')
 
     # ~ """Initialize Object KMeans that is goind to be used to find centroids on children's tries"""
     # ~ estimator = KMeans(init='k-means++')
@@ -102,7 +54,7 @@ def main():
     print len(clusters)
     for cluster in clusters:
         # ~ for centroid in cluster:
-        print len(cluster)
+        #~ print len(cluster)
         newStroke = stroke.Stroke()
         newStroke.stroke_from_xxyy(cluster[0])
         newStroke.downsampleShape(70)
@@ -112,8 +64,35 @@ def main():
     """Plot the centroids"""
     # ~ centroidStrokes[0].plot()
     for aCentroid in centroidStrokes:
-        aCentroid.plot()
+        #~ aCentroid.plot()
+        plt.imshow(aCentroid.strokeToImage(100), cmap="Greys")
+        plt.show()
 
-
+def buildStrokeCollection(path1, path2, letter):
+	strokes = {}
+	strokes["Adele"] = lm.read_data(path1 + "/with_adele", 0)[letter]
+	strokes["Alexandre"] = lm.read_data(path1+"/with_alexandre", 0)[letter]
+	strokes["Enzo"] = lm.read_data(path1+"/with_jonathan", 0)[letter]
+	strokes["Matenzo"] = lm.read_data(path1+"/with_matenzo", 0)[letter]
+	strokes["Mona"] = lm.read_data(path1+"/with_mona", 0)[letter]
+	strokes["Nathan"] = lm.read_data(path1+"/with_nathan", 0)[letter]
+	strokes["Valentine"] = lm.read_data(path1+"/with_valentine", 0)[letter]
+	strokes["Avery"] = lm.read_data(path2+"/with_avery", 0)[letter]
+	strokes["Dan"] = lm.read_data(path2+"/with_dan", 0)[letter]
+	strokes["DanielEge"] = lm.read_data(path2+"/with_daniel_ege", 0)[letter]
+	strokes["Gaia"] = lm.read_data(path2+"/with_gaia", 0)[letter]
+	strokes["Ines"] = lm.read_data(path2+"/with_ines", 0)[letter]
+	strokes["JacquelineNadine"] = lm.read_data(path2+"/with_jacqueline_nadine", 0)[letter]
+	strokes["Jake"] = lm.read_data(path2+"/with_jake", 0)[letter]
+	strokes["LaithKayra"] = lm.read_data(path2+"/with_laith_kayra", 0)[letter]
+	strokes["Lamonie"] = lm.read_data(path2+"/with_lamonie", 0)[letter]
+	strokes["LilaLudovica"] = lm.read_data(path2+"/with_lila_ludovica", 0)[letter]
+	strokes["loulwaAnais"] = lm.read_data(path2+"/with_loulwa_anais", 0)[letter]
+	strokes["Markus"] = lm.read_data(path2+"/with_markus", 0)[letter]
+	strokes["OsborneAmelia"] = lm.read_data(path2+"/with_osborne_amelia_enzoV", 0)[letter]
+	strokes["Oscar"] = lm.read_data(path2+"/with_oscar", 0)[letter]
+	strokes["WilliamRin"] = lm.read_data(path2+"/with_william_rin", 0)[letter]
+	return strokes
+	
 if __name__ == '__main__':
     main()

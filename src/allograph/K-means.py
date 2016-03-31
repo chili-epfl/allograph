@@ -4,6 +4,7 @@
 import stroke
 import learning_manager as lm
 import numpy as np
+import cv2
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
@@ -72,7 +73,11 @@ def main():
     """Plot the centroids"""
     for aCentroid in centroidStrokes:
 		#~ aCentroid.plot()
-		plt.imshow(aCentroid.strokeToImage(500), cmap="Greys")
+		#~ plt.imshow(aCentroid.strokeToImage(100), cmap="Greys")
+		#~ plt.show()
+		kernel = np.ones((30, 30), "uint8")
+		dilated = cv2.dilate(aCentroid.strokeToImage(3000),kernel,iterations=1)
+		plt.imshow(dilated, cmap="Greys")
 		plt.show()
 
 def buildStrokeCollection(path1, path2, letter):
