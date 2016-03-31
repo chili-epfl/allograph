@@ -57,70 +57,87 @@ class Stroke:
         return Stroke(x1 * num, y1 * num)
         
     def strokeToImage(self, dimension):
-	image = np.zeros(shape=(dimension,dimension))
+		
+		if ( dimension <= 0 ):
+			raise ValueError('dimension should be strictly positive')
+			
+		image = np.zeros(shape=(dimension,dimension))
 	#~ scale = max((max(self.get_x())-min(self.get_x())),(max(self.get_y())-min(self.get_y())))
 	#~ print scale
 	#~ scaleFactor = dimension / scale
 	#~ print scaleFactor
-	self.normalize_wrt_max()
-	prev_i = 0.0
-	prev_j = 0.0
-	first = True
-	for i,j in (zip(self.get_x(),self.get_y())):
-	    #~ i = int(i*scaleFactor)
-	    #~ j = int(i*scaleFactor)
-	    i = int(i*(dimension-1))
-	    j = int(j*(dimension-1))
-	    #~ print i 
-	    #~ print j
-	    image[j,i] = 1
+		"""Normalize according to the greatest dimension"""
+		self.normalize_wrt_max()
+	
+		"""Initialization of the variables to save the last values"""
+		prev_i = 0.0
+		prev_j = 0.0
+		"""Used for the case where prev does not exist"""
+		first = True
+		
+		for i,j in zip(self.get_x(),self.get_y()):
+			#~ i = int(i*scaleFactor)
+			#~ j = int(i*scaleFactor)
+			"""adjust i and j according to the dimension"""
+			i = int(i*(dimension-1))
+			j = int(j*(dimension-1))
+			#~ print i 
+			#~ print j
+			"""fills the pixel"""
+			image[j,i] = 1
 	    
-	    if (first):
-		first = False
-		prev_i = i
-		prev_j = j
-		continue
-
-	    diff_i = i - prev_i
-	    diff_j = j - prev_j
+			"""if first do not consider last value"""
+			if (first):
+				first = False
+				prev_i = i
+				prev_j = j
+				continue
+				
+			"""compute the difference between current and last value"""
+			diff_i = i - prev_i
+			diff_j = j - prev_j
 	    
-	    
-	    if (diff_j >= diff_i):
+			"""First case:"""
+			if (abs(diff_j) > abs(diff_i)):
 		
-		if (diff_i != 0):
-		    ratio = int(diff_j/diff_i)
-		else: 
-		    ratio = diff_j
+				current_j = prev_j
+				if (diff_i != 0):
+					ratio = int(diff_j/abs(diff_i))
+					sign_i = diff_i/abs(diff_i)
+					for col in range(prev_i, i, sign_i):
+						for row in range(current_j,current_j+ratio, ratio/abs(ratio)):
+							image[row,col] = 1
+						current_j += ratio;
+				else:
+					if (diff_j == 0):
+						continue
+					ratio = diff_j
+					for row in range(current_j,current_j + ratio, ratio/abs(ratio)):
+						image[row,i] = 1
+					current_j += ratio;
 		
-		current_j = prev_j
-		for col in range(prev_i,i):
-		    if (ratio >= 0):
-			for row in range(current_j,current_j+ratio):
-			    image[row,col] = 1
-		    else: 
-			for row in range(current_j,current_j+ratio,-1):
-			    image[row,col] = 1
-		    current_j += ratio;
-	    else:
+			
+			else:
+				current_i = prev_i
+				if(diff_j != 0):
+					ratio = int(diff_i/abs(diff_j))
+					sign_j = diff_j/abs(diff_j)
+					for row in range(prev_j, j, sign_j):
+						for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
+							image[row,col] = 1
+						current_i += ratio
+				else:
+					if (diff_i == 0):
+						continue
+					ratio = diff_i
+					for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
+						image[j,col] = 1
+					current_i += ratio
 		
-		if(diff_j != 0):
-		    ratio = int(diff_i/diff_j)
-		else:
-		    ratio = diff_i
-		
-		current_i = prev_i
-		for row in range(prev_j,j):
-		    if (ratio >= 0):
-			for col in range(current_i,current_i+ratio):
-			    image[row,col] = 1
-		    else:
-			for col in range(current_i,current_i+ratio, -1):
-			    image[row,col] = 1
-		    current_i += ratio
 		    
-	    prev_i = i
-	    prev_j = j
-	return image
+			prev_i = i
+			prev_j = j
+		return image
 		    
     def reset(self):
         self.x = []
