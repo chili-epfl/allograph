@@ -49,8 +49,8 @@ def main():
     print len(letters)
     
     for key in strokes:
-	for aStroke in strokes[key]:
-	    letters.append(stroke.strokeToArray(aStroke))
+		for aStroke in strokes[key]:
+			letters.append(stroke.strokeToArray(aStroke))
 			
     
     

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import stroke
 import learning_manager as lm
 from sklearn.cluster import DBSCAN

@@ -61,10 +61,7 @@ class Stroke:
 			raise ValueError('dimension should be strictly positive')
 			
 		image = np.zeros(shape=(dimension,dimension))
-	#~ scale = max((max(self.get_x())-min(self.get_x())),(max(self.get_y())-min(self.get_y())))
-	#~ print scale
-	#~ scaleFactor = dimension / scale
-	#~ print scaleFactor
+		
 		"""Normalize according to the greatest dimension"""
 		self.normalize_wrt_max()
 	
@@ -75,13 +72,11 @@ class Stroke:
 		first = True
 		
 		for i,j in zip(self.get_x(),self.get_y()):
-			#~ i = int(i*scaleFactor)
-			#~ j = int(i*scaleFactor)
+			
 			"""adjust i and j according to the dimension"""
 			i = int(i*(dimension-1))
 			j = int(j*(dimension-1))
-			#~ print i 
-			#~ print j
+			
 			"""fills the pixel"""
 			image[j,i] = 1
 	    

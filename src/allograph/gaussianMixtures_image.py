@@ -7,36 +7,31 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
 import sys
+import cv2
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.mixture import GMM
 
 def main():
-	"""/////////////////////////////////////////////INITIALIZATION/////////////////////////////////////"""
-
-	""" Create dictionnary : for a child -> strokes of the robot from the .dat files a the letter a"""
-	strokes = buildStrokeCollection("/home/gdevecchi/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/gdevecchi/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",'a')
-
-	"""/////////////////////////////////////////////MANIPULATION////////////////////////////////////////////////////"""
-
-	"""Get the children's strokes from the robot's"""
-	for key in strokes:
-		strokes[key] = stroke.childFromRobot(strokes[key])
-
+	dimension = 70
+	images = buildImageCollection("/home/gdevecchi/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/gdevecchi/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",'a',dimension)
 	letters = []
-
-	for key in strokes:
-		print key
-		for aStroke in strokes[key]:
-			letters.append(stroke.strokeToArray(aStroke))
-	#~ print len(letters)
-
+	for key in images:
+		for image in images[key]:
+			#~ kernel = np.ones((2, 2), "uint8")
+			#~ dilated = cv2.dilate(image,kernel,iterations=1)
+			w, h = original_shape = tuple(image.shape)
+			image_array = np.reshape(image, (w * h))
+			letters.append(image_array)
+			
+			
+			
 	minBIC = sys.float_info.max
 	minCluster = 1;
 	for i in range(1,100):
 		
-		gmm = DPGMM(n_components=i)
+		gmm = GMM(n_components=i)
 		gmm.fit(letters)
 		BIC = gmm.bic(np.array(letters))
 		if (BIC < minBIC):
@@ -45,13 +40,21 @@ def main():
 
 	print minCluster
 	
-	gmm = DPGMM(n_components=minCluster)
+	gmm = GMM(n_components=minCluster)
 	labels = gmm.fit_predict(letters)
-	print labels
 	
-
-def buildStrokeCollection(path1, path2, letter):
+	"""Number of clusters in labels, ignoring noise if present"""
+	n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+	
+	clusters = [letters[labels == i] for i in xrange(n_clusters_)]
+	print len(clusters)
+	for cluster in clusters:
+		plt.imshow(np.reshape(cluster[0], (dimension,dimension)), cmap="Greys")
+		plt.show()
+			
+def buildImageCollection(path1, path2, letter, dimension):
 	strokes = {}
+	images = {}
 	strokes["Adele"] = lm.read_data(path1 + "/with_adele", 0)[letter]
 	strokes["Alexandre"] = lm.read_data(path1+"/with_alexandre", 0)[letter]
 	strokes["Enzo"] = lm.read_data(path1+"/with_jonathan", 0)[letter]
@@ -74,8 +77,14 @@ def buildStrokeCollection(path1, path2, letter):
 	strokes["OsborneAmelia"] = lm.read_data(path2+"/with_osborne_amelia_enzoV", 0)[letter]
 	strokes["Oscar"] = lm.read_data(path2+"/with_oscar", 0)[letter]
 	strokes["WilliamRin"] = lm.read_data(path2+"/with_william_rin", 0)[letter]
-	return strokes
-
+	
+	for key in strokes:
+		images[key] = []
+		strokes[key] = stroke.childFromRobot(strokes[key])
+		for aLetter in strokes[key]:
+			images[key].append(aLetter.strokeToImage(dimension)) 
+			
+	return images
+	
 if __name__ == '__main__':
-	main()
-
+    main()
