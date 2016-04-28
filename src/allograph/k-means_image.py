@@ -12,39 +12,43 @@ from sklearn.metrics import silhouette_samples, silhouette_score
 
 def main():
 	
-    dimension = 280
-    images = buildImageCollection("/home/gdevecchi/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/gdevecchi/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",'e',dimension)
+    dimension = 500
+    kernel = np.ones((1, 1), "uint8")
+    images = buildImageCollection("/home/gdevecchi/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/gdevecchi/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",'a',dimension)
     
     letters = []
     for key in images:
 		for image in images[key]:
-			kernel = np.ones((5, 5), "uint8")
 			dilated = cv2.dilate(image,kernel,iterations=1)
 			w, h = original_shape = tuple(image.shape)
-			#~ plt.imshow(image,cmap="Greys")
-			#~ plt.show()
+			plt.imshow(image)
+			plt.show()
 			image_array = np.reshape(dilated, (w * h))
 			#~ image_array = np.reshape(image, (w*h))
 			letters.append(image_array)
 			
-    estimator = KMeans(n_clusters=computeNumberCentroids(letters), init='k-means++')
-    #~ estimator = KMeans(n_clusters=5,init='k-means++')
+    #~ estimator = KMeans(n_clusters=computeNumberCentroids(letters), init='k-means++')
+    estimator = KMeans(n_clusters=4,init='k-means++')
     estimator.fit(letters) 
+    print estimator.labels_	
     
-    for centroid in estimator.cluster_centers_:
-		plt.imshow(np.reshape(centroid, (dimension,dimension)), cmap="Greys")
-		plt.show()
+    #~ for centroid in estimator.cluster_centers_:
+		#~ final = cv2.morphologyEx(np.reshape(centroid, (dimension,dimension)), cv2.MORPH_OPEN, kernel)
+		#~ final = np.reshape(centroid, (dimension,dimension))
+		#~ print final
+		#~ plt.imshow(final)
+		#~ plt.show()
 
 
 def computeNumberCentroids(images):
-    range_nb_clusters = range(2, 10)
+    range_nb_clusters = range(2,len(images)-1)
 
     minSihouettes = 2.0
     minCluster = 1
 
     for n_clusters in range_nb_clusters:
 
-        clusterer = KMeans(n_clusters=n_clusters, init='k-means++')
+        clusterer = KMeans(n_clusters=n_clusters, init='random')
 
         cluster_labels = clusterer.fit_predict(images)
 

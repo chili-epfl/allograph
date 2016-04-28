@@ -8,7 +8,7 @@ library of algorithms to compare hand-written strokes
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
-
+import math
 
 class Stroke:
     """ a stroke object is a collection of x coordinates and y coordinates
@@ -62,12 +62,9 @@ class Stroke:
 			raise ValueError('dimension should be strictly positive')
 			
 		image = np.zeros(shape=(dimension,dimension))
-	#~ scale = max((max(self.get_x())-min(self.get_x())),(max(self.get_y())-min(self.get_y())))
-	#~ print scale
-	#~ scaleFactor = dimension / scale
-	#~ print scaleFactor
+		
 		"""Normalize according to the greatest dimension"""
-		self.normalize_wrt_max()
+		self.normalize()
 	
 		"""Initialization of the variables to save the last values"""
 		prev_i = 0.0
@@ -76,13 +73,11 @@ class Stroke:
 		first = True
 		
 		for i,j in zip(self.get_x(),self.get_y()):
-			#~ i = int(i*scaleFactor)
-			#~ j = int(i*scaleFactor)
+			
 			"""adjust i and j according to the dimension"""
 			i = int(i*(dimension-1))
 			j = int(j*(dimension-1))
-			#~ print i 
-			#~ print j
+			
 			"""fills the pixel"""
 			image[j,i] = 1
 	    
@@ -113,7 +108,7 @@ class Stroke:
 						continue
 					ratio = diff_j
 					for row in range(current_j,current_j + ratio, ratio/abs(ratio)):
-						image[row,prev_i] = 1
+						image[row,i] = 1
 		
 			
 			else:
@@ -132,7 +127,7 @@ class Stroke:
 						continue
 					ratio = diff_i
 					for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
-						image[prev_j,col] = 1
+						image[j,col] = 1
 		
 		    
 			prev_i = i
@@ -153,7 +148,11 @@ class Stroke:
         plt.plot(self.x, -np.array(self.y), 'b')
         plt.show()
         # plt.plot(self.x,self.y,'r.')
-
+    def plot_compare(self, stroke2):
+        plt.plot(self.x, -np.array(self.y), 'b')
+        plt.plot(stroke2.x, -np.array(stroke2.y), 'r')
+        plt.show()
+        
     def multi_strokes_plot(self):
         # self.downsampleShape(70)
         strokes = []

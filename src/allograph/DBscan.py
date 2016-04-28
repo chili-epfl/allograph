@@ -28,17 +28,15 @@ def main():
     """Build an array of all the strokes of all the children"""
     letters = []
     for key in strokes:
-        print key
         for aStroke in strokes[key]:
             letters.append(stroke.strokeToArray(aStroke))
-    print len(letters)
 
 	#SCALING
     letters = StandardScaler().fit_transform(letters)
 
     """Compute DBSCAN"""
 
-    db = DBSCAN(eps=0.3, min_samples=1.0).fit(letters)
+    db = DBSCAN(eps=1.0, min_samples=10.0).fit(letters)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
@@ -54,7 +52,6 @@ def main():
     """create strokes from centroids to be able to plot them easily"""
    
     clusters = [letters[labels == i] for i in xrange(n_clusters_)]
-    print len(clusters)
     for cluster in clusters:
         # ~ for centroid in cluster:
         #~ print len(cluster)
@@ -65,11 +62,8 @@ def main():
         centroidStrokes.append(newStroke)
 
     """Plot the centroids"""
-    # ~ centroidStrokes[0].plot()
     for aCentroid in centroidStrokes:
-        #~ aCentroid.plot()
-        plt.imshow(aCentroid.strokeToImage(100), cmap="Greys")
-        plt.show()
+        aCentroid.plot()
 
 def buildStrokeCollection(path1, path2, letter):
 	strokes = {}

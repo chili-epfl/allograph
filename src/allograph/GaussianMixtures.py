@@ -30,7 +30,6 @@ def main():
 		print key
 		for aStroke in strokes[key]:
 			letters.append(stroke.strokeToArray(aStroke))
-	#~ print len(letters)
 
 	minBIC = sys.float_info.max
 	minCluster = 1;

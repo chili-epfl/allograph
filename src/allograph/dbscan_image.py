@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 from sklearn import metrics
 
 def main():
-    dimension = 280
+    dimension = 70
     images = buildImageCollection("/home/gdevecchi/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/gdevecchi/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",'a',dimension)
     letters = []
     for key in images:
 		for image in images[key]:
-			kernel = np.ones((10, 10), "uint8")
+			kernel = np.ones((1, 1), "uint8")
 			dilated = cv2.dilate(image,kernel,iterations=1)
 			w, h = original_shape = tuple(image.shape)
 			image_array = np.reshape(dilated, (w * h))
@@ -25,11 +25,11 @@ def main():
 	#SCALING
     letters = StandardScaler().fit_transform(letters)
     
-    db = DBSCAN(eps=1.0, min_samples=2.0).fit(letters)
+    db = DBSCAN(eps=0.1, min_samples=1).fit(letters)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
-
+    print labels
     """Number of clusters in labels, ignoring noise if present"""
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
@@ -38,7 +38,7 @@ def main():
     clusters = [letters[labels == i] for i in xrange(n_clusters_)]
     print len(clusters)
     for cluster in clusters:
-		plt.imshow(np.reshape(cluster[0], (dimension,dimension)), cmap="Greys")
+		plt.imshow(np.reshape(cluster[0], (dimension,dimension)))
 		plt.show()
     
     

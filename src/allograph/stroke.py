@@ -8,6 +8,7 @@ library of algorithms to compare hand-written strokes
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
+import math
 
 class Stroke:
     """ a stroke object is a collection of x coordinates and y coordinates
@@ -63,7 +64,7 @@ class Stroke:
 		image = np.zeros(shape=(dimension,dimension))
 		
 		"""Normalize according to the greatest dimension"""
-		self.normalize_wrt_max()
+		self.normalize()
 	
 		"""Initialization of the variables to save the last values"""
 		prev_i = 0.0
@@ -147,7 +148,11 @@ class Stroke:
         plt.plot(self.x, -np.array(self.y), 'b')
         plt.show()
         # plt.plot(self.x,self.y,'r.')
-
+    def plot_compare(self, stroke2):
+        plt.plot(self.x, -np.array(self.y), 'b')
+        plt.plot(stroke2.x, -np.array(stroke2.y), 'r')
+        plt.show()
+        
     def multi_strokes_plot(self):
         # self.downsampleShape(70)
         strokes = []

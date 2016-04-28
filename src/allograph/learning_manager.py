@@ -108,7 +108,6 @@ class LearningManager():
 
 # static functions :
 #-------------------
-
 def read_data(datasetDirectory, lines_to_jump):
     data_letters = {}
     datasets = glob.glob(datasetDirectory + '/*.dat')
