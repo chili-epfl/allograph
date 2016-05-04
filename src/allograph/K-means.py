@@ -11,6 +11,7 @@ from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn.cross_validation import train_test_split
 from sklearn import svm
 from string import ascii_lowercase
+from sklearn.decomposition import PCA
 
 
 def main():
@@ -36,9 +37,12 @@ def main():
 				letters.append(stroke.strokeToArray(aStroke))
 			
     
-		n_clusters = 3
-		estimator = KMeans(n_clusters=computeNumberCentroids(letters), init='k-means++')
-		#~ estimator = KMeans(n_clusters=n_clusters,init='k-means++')
+		#~ n_clusters = 3
+		n_clusters = computeNumberCentroids(letters)
+		
+		estimator = KMeans(n_clusters=n_clusters,init='k-means++')
+		#~ pca = PCA(n_components=n_clusters).fit(letters)
+		#~ estimator = KMeans(n_clusters=n_clusters,init=pca.components_,n_init=1)
 
 		"""Compute KMean of all the letters a with 8 centroids (default)"""
 		estimator.fit(letters)
