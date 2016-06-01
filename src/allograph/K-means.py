@@ -12,6 +12,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn import svm
 from string import ascii_lowercase
 from sklearn.decomposition import PCA
+import math
 
 
 def main():
@@ -20,7 +21,7 @@ def main():
 		"""/////////////////////////////////////////////INITIALIZATION/////////////////////////////////////"""
 
 		""" Create dictionnary : for a child -> strokes of the robot from the .dat files a the letter a"""
-		strokes = buildStrokeCollection("/home/gdevecchi/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/gdevecchi/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",l)
+		strokes = buildStrokeCollection("/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",l)
     
 
 		"""/////////////////////////////////////////////MANIPULATION////////////////////////////////////////////////////"""
@@ -37,8 +38,8 @@ def main():
 				letters.append(stroke.strokeToArray(aStroke))
 			
     
-		#~ n_clusters = 3
-		n_clusters = computeNumberCentroids(letters)
+		n_clusters = 3
+		#~ n_clusters = computeNumberCentroids(letters)
 		
 		estimator = KMeans(n_clusters=n_clusters,init='k-means++')
 		#~ pca = PCA(n_components=n_clusters).fit(letters)
@@ -97,7 +98,9 @@ def main():
 			#~ i = i+1
 			#~ aCentroid.plot()
     
-		
+	"""////////////////////////////////////////////CHARACTERIZATION///////////////////////////////////////////////////"""
+
+	
 
 def arrayToStroke(array):
     newStroke = stroke.Stroke()
