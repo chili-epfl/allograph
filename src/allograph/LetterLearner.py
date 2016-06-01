@@ -13,13 +13,32 @@ import math
 
 def main():
 	ll = LetterLearner(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"],'a', 3)
-	estimator = ll.clusterize()
-	clf = ll.classify(estimator)
+	ll.clusterize()
+	#~ clf = ll.classify()
+	ll.performPCA()
+	#~ print ll.numShapesInDataset
+	#~ print "///////////////////////////////////////////////////////////////PRINCIPLE COMPONENTS///////////////////////////////////////////////////////////////////"
+	#~ print ll.getPrincipleComponents()
+	print ll.projectClusters()
+	#~ print "///////////////////////////////////////////////////////////////MEAN SHAPE///////////////////////////////////////////////////////////////////"
+	#~ print ll.getMeanShape()
+	#~ print "///////////////////////////////////////////////////////////////PARAMETER VARIANCES///////////////////////////////////////////////////////////////////"
+	#~ print ll.getParameterVariances()
 
 class LetterLearner:
 	strokes = {}
 	letters = []
 	letter = None
+	estimator = None
+	numShapesInDataset = 0
+	numPointsInShapes = 70
+	num_components = 10
+	meanShape = 0
+	principleComponents = None
+	parameterVariances = None
+	
+	
+	
 	nbClusters = 0
 	def __init__(self, folderNames, aLetter, clusters):
 		self.nbClusters = clusters
@@ -33,7 +52,9 @@ class LetterLearner:
 		for key in self.strokes:
 			for aStroke in self.strokes[key]:
 				self.letters.append(stroke.strokeToArray(aStroke))
-			
+				self.numShapesInDataset = self.numShapesInDataset + 1
+				
+				
 	def builStrokeCollection(self, folderNames, letter):
 		strokes = {}
 		
@@ -41,16 +62,16 @@ class LetterLearner:
 			for root, dirs, files in os.walk(folderName):
 				for name in dirs:
 					strokes[name] = lm.read_data(os.path.join(root,name),0)[letter]
-				
+		
 		return strokes
 		
 	def clusterize(self):
-		estimator = KMeans(n_clusters=self.nbClusters,init='k-means++')
-		estimator.fit(self.letters)
-		return estimator
+		self.estimator = KMeans(n_clusters=self.nbClusters,init='k-means++')
+		self.estimator.fit(self.letters)
 		
-	def classify(self,estimator):
-		X_train, X_test, y_train, y_test = train_test_split(np.array(self.letters,dtype=np.float64),estimator.labels_)
+		
+	def classify(self):
+		X_train, X_test, y_train, y_test = train_test_split(np.array(self.letters,dtype=np.float64),self.estimator.labels_)
 		clf = svm.SVC()
 		clf.fit(X_train, y_train) 
 		labelsPredicted =  clf.predict(X_test)
@@ -70,6 +91,37 @@ class LetterLearner:
 	def predict(self, clf, aStroke):
 		return clf.predict(stroke.strokeToArray(aStroke).reshape(1,-1))
 		
-
+		
+	def performPCA(self):
+		dataMat = np.empty((self.numShapesInDataset, self.numPointsInShapes*2))
+		i = 0
+		for key in self.strokes:
+			for aStroke in self.strokes[key]:
+				dataMat[i] = stroke.strokeToArray(aStroke)
+				i = i + 1 
+				
+		covarMat = np.cov(dataMat.T)
+		eigVals, eigVecs = np.linalg.eig(covarMat)
+		self.principleComponents = np.real(eigVecs[:, 0:self.num_components])
+		self.parameterVariances = np.real(eigVals[0:self.num_components])
+		self.meanShape = dataMat.mean(0).reshape((self.numPointsInShapes * 2, 1))
+		
+	def projectClusters(self):
+		projected = np.empty((len(self.estimator.cluster_centers_), self.num_components))
+		i = 0
+		for aCentroid in self.estimator.cluster_centers_:
+			projected[i] = self.principleComponents.T.dot(aCentroid)
+			i = i + 1
+		return projected
+		
+	def getPrincipleComponents(self):
+		return self.principleComponents.shape
+		
+	def getParameterVariances(self):
+		return len(self.parameterVariances)
+	
+	def getMeanShape(self):
+		return len(self.meanShape)
+		
 if __name__ == '__main__':
     main()
