@@ -1,6 +1,11 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+
 import stroke
 import learning_manager as lm
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
@@ -11,20 +16,6 @@ from sklearn import svm
 import math
 
 
-def main():
-	ll = LetterLearner(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"],'a', 3)
-	ll.clusterize()
-	#~ clf = ll.classify()
-	ll.performPCA()
-	#~ print ll.numShapesInDataset
-	#~ print "///////////////////////////////////////////////////////////////PRINCIPLE COMPONENTS///////////////////////////////////////////////////////////////////"
-	#~ print ll.getPrincipleComponents()
-	print ll.projectClustersV2()
-	#~ print "///////////////////////////////////////////////////////////////MEAN SHAPE///////////////////////////////////////////////////////////////////"
-	#~ print ll.getMeanShape()
-	#~ print "///////////////////////////////////////////////////////////////PARAMETER VARIANCES///////////////////////////////////////////////////////////////////"
-	#~ print ll.getParameterVariances()
-
 class LetterLearner:
 	strokes = {}
 	letters = []
@@ -32,18 +23,18 @@ class LetterLearner:
 	estimator = None
 	numShapesInDataset = 0
 	numPointsInShapes = 70
-	num_components = 10
+	num_components = 0
 	meanShape = 0
 	principleComponents = None
 	parameterVariances = None
-	
-	
-	
+	principleValues = None
 	nbClusters = 0
-	def __init__(self, folderNames, aLetter, clusters):
+	
+	def __init__(self, folderNames, aLetter, clusters, components):
 		self.nbClusters = clusters
 		self.letter = aLetter
 		self.strokes = self.builStrokeCollection(folderNames, aLetter)
+		self.num_components = components
 		"""Get the children's strokes from the robot's"""
 		for key in self.strokes:
 			self.strokes[key] = stroke.childFromRobot(self.strokes[key])
@@ -103,23 +94,28 @@ class LetterLearner:
 		covarMat = np.cov(dataMat.T)
 		eigVals, eigVecs = np.linalg.eig(covarMat)
 		self.principleComponents = np.real(eigVecs[:, 0:self.num_components])
+		self.principleValues = np.real(eigVals[0:self.num_components])
 		self.parameterVariances = np.real(eigVals[0:self.num_components])
 		self.meanShape = dataMat.mean(0).reshape((self.numPointsInShapes * 2, 1))
+	
+	def __project(self, letter):
+		return self.principleComponents.T.dot(letter)
 		
-	def projectClusters(self):
+		
+	def _projectCentroids(self):
 		projected = np.empty((len(self.estimator.cluster_centers_), self.num_components))
 		i = 0
 		for aCentroid in self.estimator.cluster_centers_:
-			projected[i] = self.principleComponents.T.dot(aCentroid)
+			projected[i] = self.__project(aCentroid)
 			i = i + 1
 		return projected
 		
-	def projectClustersV2(self):
+	def _projectClustersV1(self):
 		projected = np.empty((len(self.estimator.cluster_centers_), self.num_components, 3))
 		i = 0
 		for aCentroid in self.estimator.cluster_centers_:
 			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.letters)
-			projectedLetters = map(lambda letter: self.principleComponents.T.dot(letter), filteredLetters)
+			projectedLetters = map(lambda letter: self.__project(letter), filteredLetters)
 			
 			tuples = []
 			for j in range(self.num_components):
@@ -128,11 +124,54 @@ class LetterLearner:
 					mean = mean + letter[j]
 				mean = mean/len(projectedLetters)
 				tuples.append((mean - 2*(math.sqrt(self.parameterVariances[j])/math.sqrt(len(projectedLetters))), mean + 2*(math.sqrt(self.parameterVariances[j])/math.sqrt(len(projectedLetters)))))
-				
-			finalTuples = map(lambda tup: (tup[0][0], tup[1], tup[0][1]), zip(tuples, self.projectClusters()[i]))
+			finalTuples = map(lambda tup: (tup[0][0], tup[1], tup[0][1]), zip(tuples, self._projectCentroids()[i]))
 			projected[i] = np.array(finalTuples)
 			i = i + 1
 		return projected
+		
+	def _projectClustersV2(self):
+		projected = np.empty((len(self.estimator.cluster_centers_), self.num_components, 2))
+		i = 0
+		for aCentroid in self.estimator.cluster_centers_:
+			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.letters)
+			projectedLetters = map(lambda letter: self.principleComponents.T.dot(letter), filteredLetters)
+			varNormalized = []
+			for j in range(self.num_components):
+				varNormalized.append(np.var(map(lambda x: x[j], projectedLetters))/self.principleValues[j])
+			finalTuples = zip(varNormalized, self._projectCentroids()[i])
+			projected[i] = np.array(finalTuples)
+			i = i + 1
+		return projected
+	
+	def getMoreImportantDimensionV1(self):
+		tuples = []
+		for cluster in self._projectClustersV1():
+			dim = -1
+			diff = sys.maxint
+			for i in range(self.num_components):
+				if (diff > (cluster[i][2]-cluster[i][0])):
+					diff = cluster[i][2]-cluster[i][0]
+					dim = i
+			tuples.append((cluster[dim], dim))
+		return tuples
+		
+	def getMoreImportantDimensionV2(self):
+		tuples = []
+		for cluster in self._projectClustersV2():
+			dim = -1
+			diff = sys.maxint
+			for i in range(self.num_components):
+				if (diff > cluster[i][1]):
+					diff = cluster[i][1]
+					dim = i
+			tuples.append((cluster[dim], dim))
+		return tuples
+		
+	def modifyCoordinates(self, label, aStroke):
+		dim = self.getMoreImportantDimensionV2[label][1]
+		coordinates = self.project(stroke.strokeToArray(aStroke))
+		coordinates[dim] += 0.5
+		#TODO: projette sur R140
 		
 	def getPrincipleComponents(self):
 		return self.principleComponents

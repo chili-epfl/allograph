@@ -56,83 +56,7 @@ class Stroke:
         y1 = np.copy(np.array(self.y))
         return Stroke(x1 * num, y1 * num)
         
-    def strokeToImage(self, dimension):
-		
-		if ( dimension <= 0 ):
-			raise ValueError('dimension should be strictly positive')
-			
-		image = np.zeros(shape=(dimension,dimension))
-		
-		"""Normalize according to the greatest dimension"""
-		self.normalize()
-	
-		"""Initialization of the variables to save the last values"""
-		prev_i = 0.0
-		prev_j = 0.0
-		"""Used for the case where prev does not exist"""
-		first = True
-		
-		for i,j in zip(self.get_x(),self.get_y()):
-			
-			"""adjust i and j according to the dimension"""
-			i = int(i*(dimension-1))
-			j = int(j*(dimension-1))
-			
-			"""fills the pixel"""
-			image[j,i] = 1
-	    
-			"""if first do not consider last value"""
-			if (first):
-				first = False
-				prev_i = i
-				prev_j = j
-				continue
-				
-			"""compute the difference between current and last value"""
-			diff_i = i - prev_i
-			diff_j = j - prev_j
-	    
-			if (abs(diff_j) >= abs(diff_i)):
-				current_j = prev_j
-				if (diff_i != 0):
-					ratio = int(diff_j/abs(diff_i))
-					if (ratio == 0):
-						continue
-					sign_i = diff_i/abs(diff_i)
-					for col in range(prev_i, i, sign_i):
-						for row in range(current_j,current_j+ratio, ratio/abs(ratio)):
-							image[row,col] = 1
-						current_j += ratio;
-				else:
-					if (diff_j == 0):
-						continue
-					ratio = diff_j
-					for row in range(current_j,current_j + ratio, ratio/abs(ratio)):
-						image[row,i] = 1
-		
-			
-			else:
-				current_i = prev_i
-				if(diff_j != 0):
-					ratio = int(diff_i/abs(diff_j))
-					if (ratio == 0):
-						continue
-					sign_j = diff_j/abs(diff_j)
-					for row in range(prev_j, j, sign_j):
-						for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
-							image[row,col] = 1
-						current_i += ratio
-				else:
-					if (diff_i == 0):
-						continue
-					ratio = diff_i
-					for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
-						image[j,col] = 1
-		
-		    
-			prev_i = i
-			prev_j = j
-		return image
+    
 		    
     def reset(self):
         self.x = []
@@ -148,6 +72,7 @@ class Stroke:
         plt.plot(self.x, -np.array(self.y), 'b')
         plt.show()
         # plt.plot(self.x,self.y,'r.')
+        
     def plot_compare(self, stroke2):
         plt.plot(self.x, -np.array(self.y), 'b')
         plt.plot(stroke2.x, -np.array(stroke2.y), 'r')
@@ -384,36 +309,109 @@ class Stroke:
         else:
             return [self]
 
-        def split_by_density(self, treshold=3):
-            """H -> |-| """
+	def split_by_density(self, treshold=3):
+		"""H -> |-| """
+		splited_strokes = []
+		current_stroke = Stroke()
+		stroke_length, _ = self.euclidian_length()
+		mean_dist = stroke_length / (self.get_len() + 0.000001)
+		if len(self.x) > 3:
+			current_stroke.append(self.x[0], self.y[0])
+			for i in range(len(self.x) - 2):
+				x1 = float(self.x[i])
+				x2 = float(self.x[i + 1])
+				y1 = float(self.y[i])
+				y2 = float(self.y[i + 1])
+				dist = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+				density = dist / mean_dist
+				current_stroke.append(x2, y2)
+				if density > 3:
+					splited_strokes.append(current_stroke)
+					current_stroke.reset()
+			if current_stroke.get_x():
+				splited_strokes.append(current_stroke)
 
-        splited_strokes = []
-        current_stroke = Stroke()
-
-        stroke_length, _ = self.euclidian_length()
-
-        mean_dist = stroke_length / (self.get_len() + 0.000001)
-
-        if len(self.x) > 3:
-            current_stroke.append(self.x[0], self.y[0])
-            for i in range(len(self.x) - 2):
-                x1 = float(self.x[i])
-                x2 = float(self.x[i + 1])
-                y1 = float(self.y[i])
-                y2 = float(self.y[i + 1])
-                dist = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-                density = dist / mean_dist
-                current_stroke.append(x2, y2)
-                if density > 3:
-                    splited_strokes.append(current_stroke)
-                    current_stroke.reset()
-            if current_stroke.get_x():
-                splited_strokes.append(current_stroke)
-
-            return splited_strokes
-        else:
-            return [self]
-   
+			return splited_strokes
+		else:
+			return [self]
+		
+	def strokeToImage(self, dimension):
+		
+		if ( dimension <= 0 ):
+			raise ValueError('dimension should be strictly positive')
+			
+		image = np.zeros(shape=(dimension,dimension))
+		
+		"""Normalize according to the greatest dimension"""
+		self.normalize()
+	
+		"""Initialization of the variables to save the last values"""
+		prev_i = 0.0
+		prev_j = 0.0
+		"""Used for the case where prev does not exist"""
+		first = True
+		
+		for i,j in zip(self.get_x(),self.get_y()):
+			
+			"""adjust i and j according to the dimension"""
+			i = int(i*(dimension-1))
+			j = int(j*(dimension-1))
+			
+			"""fills the pixel"""
+			image[j,i] = 1
+	    
+			"""if first do not consider last value"""
+			if (first):
+				first = False
+				prev_i = i
+				prev_j = j
+				continue
+				
+			"""compute the difference between current and last value"""
+			diff_i = i - prev_i
+			diff_j = j - prev_j
+	    
+			if (abs(diff_j) >= abs(diff_i)):
+				current_j = prev_j
+				if (diff_i != 0):
+					ratio = int(diff_j/abs(diff_i))
+					if (ratio == 0):
+						continue
+					sign_i = diff_i/abs(diff_i)
+					for col in range(prev_i, i, sign_i):
+						for row in range(current_j,current_j+ratio, ratio/abs(ratio)):
+							image[row,col] = 1
+						current_j += ratio;
+				else:
+					if (diff_j == 0):
+						continue
+					ratio = diff_j
+					for row in range(current_j,current_j + ratio, ratio/abs(ratio)):
+						image[row,i] = 1
+		
+			
+			else:
+				current_i = prev_i
+				if(diff_j != 0):
+					ratio = int(diff_i/abs(diff_j))
+					if (ratio == 0):
+						continue
+					sign_j = diff_j/abs(diff_j)
+					for row in range(prev_j, j, sign_j):
+						for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
+							image[row,col] = 1
+						current_i += ratio
+				else:
+					if (diff_i == 0):
+						continue
+					ratio = diff_i
+					for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
+						image[j,col] = 1
+		
+		    
+			prev_i = i
+			prev_j = j
+		return image
 
 
 # static functions:
