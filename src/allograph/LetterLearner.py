@@ -19,7 +19,7 @@ def main():
 	#~ print ll.numShapesInDataset
 	#~ print "///////////////////////////////////////////////////////////////PRINCIPLE COMPONENTS///////////////////////////////////////////////////////////////////"
 	#~ print ll.getPrincipleComponents()
-	print ll.projectClusters()
+	print ll.projectClustersV2()
 	#~ print "///////////////////////////////////////////////////////////////MEAN SHAPE///////////////////////////////////////////////////////////////////"
 	#~ print ll.getMeanShape()
 	#~ print "///////////////////////////////////////////////////////////////PARAMETER VARIANCES///////////////////////////////////////////////////////////////////"
@@ -114,14 +114,34 @@ class LetterLearner:
 			i = i + 1
 		return projected
 		
+	def projectClustersV2(self):
+		projected = np.empty((len(self.estimator.cluster_centers_), self.num_components, 3))
+		i = 0
+		for aCentroid in self.estimator.cluster_centers_:
+			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.letters)
+			projectedLetters = map(lambda letter: self.principleComponents.T.dot(letter), filteredLetters)
+			
+			tuples = []
+			for j in range(self.num_components):
+				mean = 0
+				for letter in projectedLetters:
+					mean = mean + letter[j]
+				mean = mean/len(projectedLetters)
+				tuples.append((mean - 2*(math.sqrt(self.parameterVariances[j])/math.sqrt(len(projectedLetters))), mean + 2*(math.sqrt(self.parameterVariances[j])/math.sqrt(len(projectedLetters)))))
+				
+			finalTuples = map(lambda tup: (tup[0][0], tup[1], tup[0][1]), zip(tuples, self.projectClusters()[i]))
+			projected[i] = np.array(finalTuples)
+			i = i + 1
+		return projected
+		
 	def getPrincipleComponents(self):
-		return self.principleComponents.shape
+		return self.principleComponents
 		
 	def getParameterVariances(self):
-		return len(self.parameterVariances)
+		return self.parameterVariances
 	
 	def getMeanShape(self):
-		return len(self.meanShape)
+		return self.meanShape
 		
 if __name__ == '__main__':
     main()
