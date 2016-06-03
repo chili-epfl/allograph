@@ -84,23 +84,21 @@ class LetterLearner:
 		
 		
 	def performPCA(self):
-		dataMat = np.empty((self.numShapesInDataset, self.numPointsInShapes*2))
-		i = 0
-		for key in self.strokes:
-			for aStroke in self.strokes[key]:
-				dataMat[i] = stroke.strokeToArray(aStroke)
-				i = i + 1 
-				
+		dataMat = np.array(self.letters).reshape((self.numShapesInDataset, self.numPointsInShapes*2))
 		covarMat = np.cov(dataMat.T)
 		eigVals, eigVecs = np.linalg.eig(covarMat)
 		self.principleComponents = np.real(eigVecs[:, 0:self.num_components])
 		self.principleValues = np.real(eigVals[0:self.num_components])
 		self.parameterVariances = np.real(eigVals[0:self.num_components])
 		self.meanShape = dataMat.mean(0).reshape((self.numPointsInShapes * 2, 1))
+		
+		
 	
 	def __project(self, letter):
-		return self.principleComponents.T.dot(letter)
-		
+		return np.dot(self.principleComponents.T, (letter.reshape(-1, 1) - self.meanShape)).reshape(self.num_components,)
+	
+	def __projectBack(self, letter):
+		return (self.meanShape + np.dot(self.principleComponents, letter).reshape(-1, 1)).reshape(self.numPointsInShapes*2, )
 		
 	def _projectCentroids(self):
 		projected = np.empty((len(self.estimator.cluster_centers_), self.num_components))
@@ -134,7 +132,7 @@ class LetterLearner:
 		i = 0
 		for aCentroid in self.estimator.cluster_centers_:
 			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.letters)
-			projectedLetters = map(lambda letter: self.principleComponents.T.dot(letter), filteredLetters)
+			projectedLetters = map(lambda letter: self.__project(letter), filteredLetters)
 			varNormalized = []
 			for j in range(self.num_components):
 				varNormalized.append(np.var(map(lambda x: x[j], projectedLetters))/self.principleValues[j])
@@ -167,12 +165,23 @@ class LetterLearner:
 			tuples.append((cluster[dim], dim))
 		return tuples
 		
-	def modifyCoordinates(self, label, aStroke):
-		dim = self.getMoreImportantDimensionV2[label][1]
-		coordinates = self.project(stroke.strokeToArray(aStroke))
-		coordinates[dim] += 0.5
-		#TODO: projette sur R140
+	def modifyCoordinates(self, label, letter, factor):
+		dim = self.getMoreImportantDimensionV2()[label][1]
+		coordinates = self.__project(letter)
+		coordinates[dim] += factor
+		return self.__projectBack(coordinates)
 		
+		
+	def printLetter(self, letter):
+		stroke.arrayToStroke(letter).plot()
+    
+    #first in blue, second in red
+	def printLetters(self, letters):
+		stroke.plot_list(map(lambda l: stroke.arrayToStroke(l), letters))
+		
+	def getEstimator(self):
+		return self.estimator
+	
 	def getPrincipleComponents(self):
 		return self.principleComponents
 		

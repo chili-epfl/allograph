@@ -430,13 +430,20 @@ def childFromRobot(RobotStrokes):
 def strokeToArray(aStroke):
     return (np.append(np.array(aStroke.x), np.array(aStroke.y)))
 	
-
+def arrayToStroke(array):
+    newStroke = Stroke()
+    newStroke.stroke_from_xxyy(array)
+    newStroke.downsampleShape(70)
+    newStroke.uniformize()
+    return newStroke
+    
 def plot_list(strokes):
     length = len(strokes)
+    
     for i in range(length):
-        plt.subplot(1, length, i)
-        strokes[i].plot()
-        # plt.show()
+         plt.plot(strokes[i].x, -np.array(strokes[i].y))
+		
+    plt.show()
 
 
 def save_plot_list(strokes, name):
