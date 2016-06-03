@@ -5,7 +5,6 @@
 import stroke
 import learning_manager as lm
 import os
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
@@ -28,6 +27,10 @@ class LetterLearner:
 	principleComponents = None
 	parameterVariances = None
 	principleValues = None
+	X_train = None
+	X_test = None
+	y_train = None
+	y_test = None
 	nbClusters = 0
 	
 	def __init__(self, folderNames, aLetter, clusters, components):
@@ -44,7 +47,7 @@ class LetterLearner:
 			for aStroke in self.strokes[key]:
 				self.letters.append(stroke.strokeToArray(aStroke))
 				self.numShapesInDataset = self.numShapesInDataset + 1
-				
+		
 				
 	def builStrokeCollection(self, folderNames, letter):
 		strokes = {}
@@ -145,7 +148,7 @@ class LetterLearner:
 		tuples = []
 		for cluster in self._projectClustersV1():
 			dim = -1
-			diff = sys.maxint
+			diff = np.Infinity
 			for i in range(self.num_components):
 				if (diff > (cluster[i][2]-cluster[i][0])):
 					diff = cluster[i][2]-cluster[i][0]
@@ -157,7 +160,7 @@ class LetterLearner:
 		tuples = []
 		for cluster in self._projectClustersV2():
 			dim = -1
-			diff = sys.maxint
+			diff = np.Infinity
 			for i in range(self.num_components):
 				if (diff > cluster[i][1]):
 					diff = cluster[i][1]
@@ -175,7 +178,7 @@ class LetterLearner:
 	def printLetter(self, letter):
 		stroke.arrayToStroke(letter).plot()
     
-    #first in blue, second in red
+    #first in blue
 	def printLetters(self, letters):
 		stroke.plot_list(map(lambda l: stroke.arrayToStroke(l), letters))
 		
