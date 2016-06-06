@@ -18,8 +18,10 @@ import math
 class LetterLearner:
 	strokes = {}
 	letters = []
+	children = []
 	letter = None
 	estimator = None
+	clf = None
 	numShapesInDataset = 0
 	numPointsInShapes = 70
 	num_components = 0
@@ -29,8 +31,8 @@ class LetterLearner:
 	principleValues = None
 	X_train = None
 	X_test = None
-	y_train = None
-	y_test = None
+	children_train = []
+	children_test = []
 	nbClusters = 0
 	
 	def __init__(self, folderNames, aLetter, clusters, components):
@@ -46,7 +48,10 @@ class LetterLearner:
 		for key in self.strokes:
 			for aStroke in self.strokes[key]:
 				self.letters.append(stroke.strokeToArray(aStroke))
-				self.numShapesInDataset = self.numShapesInDataset + 1
+				self.children.append(key)
+				
+		self.X_train, self.X_test, self.children_train, self.children_test = train_test_split(np.array(self.letters,dtype=np.float64), np.array(self.children, dtype=np.str_))
+		self.numShapesInDataset = len(self.X_train)
 		
 				
 	def builStrokeCollection(self, folderNames, letter):
@@ -61,33 +66,28 @@ class LetterLearner:
 		
 	def clusterize(self):
 		self.estimator = KMeans(n_clusters=self.nbClusters,init='k-means++')
-		self.estimator.fit(self.letters)
-		
+		self.estimator.fit(self.X_train)
+	
+	def childrenNamePerCluster(self):
+		i = 0
+		for aCluster in self.estimator.cluster_centers_:
+			j = 0
+			for let in self.X_train:
+				if (self.estimator.predict(np.array(let).reshape(1,-1)) == i):
+					print i, ": ", self.children_train[j]
+				j += 1
+			i += 1
 		
 	def classify(self):
-		X_train, X_test, y_train, y_test = train_test_split(np.array(self.letters,dtype=np.float64),self.estimator.labels_)
-		clf = svm.SVC()
-		clf.fit(X_train, y_train) 
-		labelsPredicted =  clf.predict(X_test)
-    
-		diff = [predicted-real for predicted,real in zip(labelsPredicted, y_test)]
-    
-		count = 0
-		for d in diff:
-			if (d == 0):
-				count = count + 1	
-			
-		accuracy = (float(count)/len(diff))*100
-		print "accuracy in %:"
-		print accuracy 
-		return clf
+		self.clf = svm.SVC()
+		self.clf.fit(self.X_train, self.estimator.labels_)
 		
-	def predict(self, clf, aStroke):
-		return clf.predict(stroke.strokeToArray(aStroke).reshape(1,-1))
+	def predict(self, letter):
+		return self.clf.predict(letter)
 		
 		
 	def performPCA(self):
-		dataMat = np.array(self.letters).reshape((self.numShapesInDataset, self.numPointsInShapes*2))
+		dataMat = np.array(self.X_train).reshape((self.numShapesInDataset, self.numPointsInShapes*2))
 		covarMat = np.cov(dataMat.T)
 		eigVals, eigVecs = np.linalg.eig(covarMat)
 		self.principleComponents = np.real(eigVecs[:, 0:self.num_components])
@@ -115,7 +115,7 @@ class LetterLearner:
 		projected = np.empty((len(self.estimator.cluster_centers_), self.num_components, 3))
 		i = 0
 		for aCentroid in self.estimator.cluster_centers_:
-			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.letters)
+			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.X_train)
 			projectedLetters = map(lambda letter: self.__project(letter), filteredLetters)
 			
 			tuples = []
@@ -134,7 +134,7 @@ class LetterLearner:
 		projected = np.empty((len(self.estimator.cluster_centers_), self.num_components, 2))
 		i = 0
 		for aCentroid in self.estimator.cluster_centers_:
-			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.letters)
+			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.X_train)
 			projectedLetters = map(lambda letter: self.__project(letter), filteredLetters)
 			varNormalized = []
 			for j in range(self.num_components):
@@ -174,6 +174,12 @@ class LetterLearner:
 		coordinates[dim] += factor
 		return self.__projectBack(coordinates)
 		
+	def testAlgo(self, factor):
+		ls = []
+		for aLetter in self.X_test:
+			ls.append(self.modifyCoordinates(self.predict(np.array(aLetter).reshape(1, -1))[0], aLetter, factor))
+		return ls
+			
 		
 	def printLetter(self, letter):
 		stroke.arrayToStroke(letter).plot()

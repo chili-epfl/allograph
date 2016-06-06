@@ -70,7 +70,7 @@ class Stroke:
 
     def plot(self):
         plt.plot(self.x, -np.array(self.y), 'b')
-        plt.show()
+        #~ plt.show()
         # plt.plot(self.x,self.y,'r.')
         
     def plot_compare(self, stroke2):
@@ -443,7 +443,7 @@ def plot_list(strokes):
     for i in range(length):
          plt.plot(strokes[i].x, -np.array(strokes[i].y))
 		
-    plt.show()
+    #~ plt.show()
 
 
 def save_plot_list(strokes, name):
