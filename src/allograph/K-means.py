@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
-from sklearn.cross_validation import train_test_split
+from sklearn import cross_validation 
 from sklearn import svm
 from string import ascii_lowercase
 from sklearn.decomposition import PCA
@@ -17,13 +17,16 @@ import math
 
 def main():
 	meanSum = 0
-	for l in ascii_lowercase:
+	lis = []
+	#~ meanmean = [0]*len(ascii_lowercase)
+	#~ for i in range(0, 99): 
+	for j in range(len(ascii_lowercase)):
 		"""/////////////////////////////////////////////INITIALIZATION/////////////////////////////////////"""
 
 		""" Create dictionnary : for a child -> strokes of the robot from the .dat files a the letter a"""
-		strokes = buildStrokeCollection("/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",l)
-    
-
+		strokes = buildStrokeCollection("/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress",ascii_lowercase[j])
+   
+	
 		"""/////////////////////////////////////////////MANIPULATION////////////////////////////////////////////////////"""
 
 		"""Get the children's strokes from the robot's"""
@@ -32,43 +35,86 @@ def main():
 
 		"""Build an array of all the strokes of all the children"""
 		letters = []
-    
+		X_train = []
+		X_test = []
+		
 		for key in strokes:
 			for aStroke in strokes[key]:
 				letters.append(stroke.strokeToArray(aStroke))
-			
+		allButOne = []
+		start = True
+		y_test_labels = []
+		y_train_labels = []
+		i = 0
+		for key in strokes:
+			if (start):
+				start = False
+				
+				for aStroke in strokes[key]:
+					X_test.append(stroke.strokeToArray(aStroke))
+					y_test_labels.append(i)
+					i += 1
+			else:		
+				for aStroke in strokes[key]:
+					allButOne.append(stroke.strokeToArray(aStroke))
+					y_train_labels.append(i)
+					i = i+1
     
-		n_clusters = 3
-		#~ n_clusters = computeNumberCentroids(letters)
+		n_clusters = 6
+			#~ n_clusters = computeNumberCentroids(letters)
 		
 		estimator = KMeans(n_clusters=n_clusters,init='k-means++')
-		#~ pca = PCA(n_components=n_clusters).fit(letters)
-		#~ estimator = KMeans(n_clusters=n_clusters,init=pca.components_,n_init=1)
+			#~ pca = PCA(n_components=n_clusters).fit(letters)
+			#~ estimator = KMeans(n_clusters=n_clusters,init=pca.components_,n_init=1)
 
 		"""Compute KMean of all the letters a with 8 centroids (default)"""
 		estimator.fit(letters)
     
 		"""////////////////////////////////////////////////CLASSIFY//////////////////////////////////////////////////////"""
     
-		X_train, X_test, y_train, y_test = train_test_split(np.array(letters,dtype=np.float64),estimator.labels_)
+		#~ X_train, X_test, y_train, y_test = cross_validation.train_test_split(np.array(letters,dtype=np.float64),estimator.labels_, test_size=0.1)
 		clf = svm.SVC()
-		clf.fit(X_train, y_train) 
-		labelsPredicted =  clf.predict(X_test)
-    
-		diff = [predicted-real for predicted,real in zip(labelsPredicted, y_test)]
-    
-		count = 0
-		for d in diff:
-			if (d == 0):
-				count = count + 1	
-			
-		accuracy = (float(count)/len(diff))*100
-		print l
-		print accuracy
-		meanSum += accuracy
+		#~ clf.fit(X_train, y_train) 
+		#~ cv = cross_validation.ShuffleSplit()
+		scores = cross_validation.cross_val_score(clf, np.array(letters,dtype=np.float64),estimator.labels_,cv=10)
+		#~ print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+		lis.append(scores.mean())
+	plt.plot(lis)
+	plt.title('the mean accuracy of each letter of the alphabet from a test set')
+	plt.xlabel('id of letter')
+	plt.ylabel('mean accuracy')
+	plt.show()
+	print lis
 		
-	print "moyenne est de:"
-	print float(meanSum)/len(ascii_lowercase)
+		#~ y_test = []
+		#~ y_train = []
+		#~ for i in y_test_labels:
+			#~ y_test.append(letters[i])
+			
+		#~ for i in y_train_labels:
+			#~ y_train.append(letters[i])
+			
+		
+		#~ labelsPredicted =  clf.predict(X_test)
+   
+		#~ diff = [predicted-real for predicted,real in zip(labelsPredicted, y_test)]
+    
+		#~ count = 0
+		#~ for d in diff:
+			#~ if (d == 0):
+				#~ count = count + 1	
+			
+		#~ print (float(count)/len(diff))*100
+		#~ meanmean[j] += accuracy
+			#~ lis.append(accuracy)
+			#~ meanSum += accuracy
+	#~ for i in range(0, 99):
+		#~ meanmean[j] /= float(100.0)
+	#~ plt.plot(meanmean)
+	#~ plt.show()
+	#~ print meanmean
+		
+	
     
     
 

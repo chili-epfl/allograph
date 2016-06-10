@@ -22,7 +22,6 @@ class LetterLearnerwoClusterization:
 	def __init__(self, components, data):
 		self.dataSet = data
 		self.num_components = components
-		self .num_components = components
 		self.numShapesInDataset = len(self.dataSet)
 		
 	def performPCA(self):
