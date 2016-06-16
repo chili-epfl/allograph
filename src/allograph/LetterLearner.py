@@ -7,9 +7,7 @@ import learning_manager as lm
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn.cross_validation import train_test_split
 from sklearn import svm
 import math
@@ -71,7 +69,7 @@ class LetterLearner:
 		
 		return strokes
 		
-	"""Prints the list of children per cluster"""
+	"""Prints the number of children per cluster"""
 	def childrenNamePerCluster(self):
 		su = [0]*self.nbClusters
 		for s in range(0,999):
@@ -101,7 +99,7 @@ class LetterLearner:
 		plt.show()
 				
 				
-				
+	"""Display number of strokes per letter in the data set"""			
 	def infoDataSet(self, folderNames):
 		lis = {}	
 		for l in ascii_lowercase:
@@ -214,8 +212,23 @@ class LetterLearner:
 				if (diff > (cluster[i][2]-cluster[i][0])):
 					diff = cluster[i][2]-cluster[i][0]
 					dim = i
-			tuples.append((cluster[dim], dim))
+			tuples.append(dim)
 		return tuples
+		
+	"""Projects onto the eigenspace modify the most important coordinate and project back to the regular space"""
+	def _modifyCoordinatesV1(self, label, letter, factor):
+		dim = self._getMoreImportantDimensionV1()[label]
+		coordinates = self.__project(letter)
+		coordinates[dim] += factor
+		return self.__projectBack(coordinates)
+	
+	"""modify all the letters of the test set and return them"""
+	def testAlgoV1(self, factor):
+		ls = []
+		for aLetter in self.X_test:
+			label = self.predict(np.array(aLetter).reshape(1, -1))[0]
+			ls.append(self._modifyCoordinatesV1(label, aLetter, factor))
+		return ls
 		
 	"""//////////////////////////////////////////////////////////////////////////////Second Version////////////////////////////////////////////////////////////////////////////////////////////////////"""
 	"""This version computes for each dimension of the eigenspace the normalized variance for each cluster and selects the smallest one for each cluster"""
@@ -256,19 +269,18 @@ class LetterLearner:
 		return tuples
 		
 	"""Projects onto the eigenspace modify the most important coordinate and project back to the regular space"""
-	def _modifyCoordinatesV1(self, label, letter, factor):
+	def _modifyCoordinatesV2(self, label, letter, factor):
 		dim = self._getMoreImportantDimensionV2()[label]
 		coordinates = self.__project(letter)
 		coordinates[dim] += factor
 		return self.__projectBack(coordinates)
 		
-	"""Test the algorithm on the test set"""
-	def testAlgoV1(self, factor):
+	"""modify all the letters of the test set and return them"""
+	def testAlgoV2(self, factor):
 		ls = []
 		for aLetter in self.X_test:
 			label = self.predict(np.array(aLetter).reshape(1, -1))[0]
-			#~ ls.append((self._modifyCoordinatesV1(label, aLetter, factor), label))
-			ls.append(self._modifyCoordinatesV1(label, aLetter, factor))
+			ls.append(self._modifyCoordinatesV2(label, aLetter, factor))
 		return ls
 	
 	"""//////////////////////////////////////////////////////////////////////////////Third Version////////////////////////////////////////////////////////////////////////////////////////////////////"""
@@ -305,9 +317,9 @@ class LetterLearner:
 			
 		return tuples
 
-		
-	def _modifyCoordinatesV2(self, label, letter, factors, n):
-		dims = self._getMoreImportantDimensionV3(n)[label]
+	"""Modify coordinates on n most important eigenvectors"""
+	def _modifyCoordinatesV3(self, label, letter, factors):
+		dims = self._getMoreImportantDimensionV3(len(factors))[label]
 		coordinates = self.__project(letter)
 		i = 0
 		for dim in dims:
@@ -315,11 +327,12 @@ class LetterLearner:
 			i += 1
 			
 		return self.__projectBack(coordinates)
-		
-	def testAlgoV2(self, factors, n):
+	
+	"""modify all the letters of the test set and return them"""
+	def testAlgoV3(self, factors):
 		ls = []
 		for aLetter in self.X_test:
-			ls.append(self._modifyCoordinatesV2(self.predict(np.array(aLetter).reshape(1, -1))[0], aLetter, factors, n))
+			ls.append(self._modifyCoordinatesV3(self.predict(np.array(aLetter).reshape(1, -1))[0], aLetter, factors))
 		return ls
 		
 	def printLetter(self, letter):

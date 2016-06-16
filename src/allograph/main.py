@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import LetterLearner as l1
-import LetterLearnerV2 as l2
+import LetterLearnerOnClusters as l2
 import LetterLearnerwoClusterization as oldL
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,12 +10,19 @@ import stroke
  
 
 def main():
-	newLetterLearner = l1.LetterLearner(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"],'a', 6, 10)
+	l = l1.LetterLearner(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"],'a', 6, 10)
 	#~ oldLetterLearner = oldL.LetterLearnerwoClusterization(10, newLetterLearner.X_train)
-	#~ l = l2.LetterLearnerV2(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"],'a', 6, 100)
-	newLetterLearner.clusterize()
-	clf = newLetterLearner.classify()
-	newLetterLearner.performPCA()
+	#~ l = l2.LetterLearnerOnClusters(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"],'a', 6, 100)
+	#~ newLetterLearner.clusterize()
+	#~ clf = newLetterLearner.classify()
+	#~ newLetterLearner.performPCA()
+	l.clusterize()
+	l.classify()
+	l.performPCA()
+	for le1, le2, le3 in zip(l.testAlgoV2(0.0), l.testAlgoV2(0.5), l.testAlgoV3([0.5, 0.25])):
+		l.printLetters([le1, le2, le3])
+		plt.title("original vs transformation +0.5 vs +0.5,+0.25")
+		plt.show()
 	#~ oldLetterLearner.performPCA()
 	#~ print ll.numShapesInDataset
 	#~ print "///////////////////////////////////////////////////////////////PRINCIPLE COMPONENTS///////////////////////////////////////////////////////////////////"
@@ -29,7 +36,7 @@ def main():
 			#~ li.append(l.modifyCoordinates(aCentroid[1], aCentroid[0], i))
 		#~ l.printLetters(li)
 	#~ xTest = newLetterLearner.X_test
-	a = []
+	#~ a = []
 	#~ b = []
 	#~ newLetterLearner.infoDataSet(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"])
 	"""///////////////////////////////////////////////////////////////////////////////////////TEST OLD VS NEW///////////////////////////////////////////////////////////////////////////////////////////////////////////////"""

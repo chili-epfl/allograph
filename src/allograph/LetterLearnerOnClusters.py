@@ -16,12 +16,13 @@ from sklearn import svm
 import math
 
 
-class LetterLearnerV2:
+class LetterLearnerOnClusters:
 
 	strokes = {}
 	letters = []
 	letter = None
 	estimator = None
+	clf = None
 	numPointsInShapes = 70
 	num_components = 0
 	meanShape = []
@@ -29,6 +30,9 @@ class LetterLearnerV2:
 	parameterVariances = []
 	principleValues = []
 	nbClusters = 0
+	X_train = []
+	X_test = []
+
 	
 	def __init__(self, folderNames, aLetter, clusters, components):
 		self.nbClusters = clusters
@@ -44,6 +48,12 @@ class LetterLearnerV2:
 			for aStroke in self.strokes[key]:
 				self.letters.append(stroke.strokeToArray(aStroke))
 				
+		"""splits the sets of letters in two sets: one to train, the other to test."""	
+		self.X_train, self.X_test = train_test_split(np.array(self.letters,dtype=np.float64), test_size=0.1)
+		"""Saves the number of samples"""
+		self.numShapesInDataset = len(self.X_train)
+				
+	"""Builds the collection of strokes from list of root folders."""		
 	def builStrokeCollection(self, folderNames, letter):
 		strokes = {}
 		
@@ -54,36 +64,26 @@ class LetterLearnerV2:
 		
 		return strokes
 		
+	"""Clusterizes using k-means and a number of clusters specified during the instanciation of the class."""
 	def clusterize(self):
 		self.estimator = KMeans(n_clusters=self.nbClusters,init='k-means++')
-		self.estimator.fit(self.letters)
-		
-		
+		self.estimator.fit(self.X_train)
+	
+	"""Classifies using SVM using the training set"""
 	def classify(self):
-		X_train, X_test, y_train, y_test = train_test_split(np.array(self.letters,dtype=np.float64),self.estimator.labels_)
-		clf = svm.SVC()
-		clf.fit(X_train, y_train) 
-		labelsPredicted =  clf.predict(X_test)
-    
-		diff = [predicted-real for predicted,real in zip(labelsPredicted, y_test)]
-    
-		count = 0
-		for d in diff:
-			if (d == 0):
-				count = count + 1	
-			
-		accuracy = (float(count)/len(diff))*100
-		print "accuracy in %:"
-		print accuracy 
-		return clf
+		self.clf = svm.SVC()
+		self.clf.fit(self.X_train, self.estimator.labels_)
 		
-	def clfPredict(self, clf, aStroke):
-		return clf.predict(stroke.strokeToArray(aStroke).reshape(1,-1))
 		
+	"""Predicts a letter label"""	
+	def predict(self, letter):
+		return self.clf.predict(letter)
+		
+	"""Perform PCA on each clusters"""
 	def performPCA(self):
 		i = 0
 		for aCentroid in self.estimator.cluster_centers_:
-			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.letters)
+			filteredLetters = filter(lambda x: self.estimator.predict(np.array(x).reshape(1,-1)) == i, self.X_train)
 			dataMat = np.array(filteredLetters).reshape((len(filteredLetters), self.numPointsInShapes*2))
 			covarMat = np.cov(dataMat.T)
 			eigVals, eigVecs = np.linalg.eig(covarMat)
@@ -92,13 +92,16 @@ class LetterLearnerV2:
 			self.parameterVariances.append(np.real(eigVals[0:self.num_components]))
 			self.meanShape.append(dataMat.mean(0).reshape((self.numPointsInShapes * 2, 1)))
 			i += 1
-			
+	
+	"""Helper function to project a letter on the eigen space of the specified cluster"""
 	def __project(self, letter, index):
 		return np.dot(self.principleComponents[index].T, (letter.reshape(-1, 1) - self.meanShape[index])).reshape(self.num_components,)
 	
+	"""Helper function to project a letter back to the regular space"""
 	def __projectBack(self, letter, index):
 		return (self.meanShape[index] + np.dot(self.principleComponents[index], letter).reshape(-1, 1)).reshape(self.numPointsInShapes*2, )
 	
+	"""Helper funciton to project all the centroids to the eigen space"""
 	def _projectCentroids(self):
 		projected = np.empty((len(self.estimator.cluster_centers_), self.num_components))
 		i = 0
@@ -107,10 +110,19 @@ class LetterLearnerV2:
 			i = i + 1
 		return projected		
 	
-	def modifyCoordinates(self, label, letter, factor):
+	"""Projects onto the eigenspace modify the first coordinate and project back onto the regular space"""
+	def _modifyCoordinates(self, label, letter, factor):
 		coordinates = self.__project(letter, label)
 		coordinates[0] += factor
 		return self.__projectBack(coordinates, label)
+	
+	"""modify all the letters of the test set and return them"""	
+	def testAlgo(self, factor):
+		ls = []
+		for aLetter in self.X_test:
+			label = self.predict(np.array(aLetter).reshape(1, -1))[0]
+			ls.append(self._modifyCoordinates(label, aLetter, factor))
+		return ls
 		
 	def printLetter(self, letter):
 		stroke.arrayToStroke(letter).plot()
