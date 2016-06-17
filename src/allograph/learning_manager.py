@@ -20,7 +20,7 @@ from ast import literal_eval
 
 Shape = recordtype('Shape', [('path', None), ('shapeID', None), ('shapeType', None), ('shapeType_code', None), ('paramsToVary', None), ('paramValues', None)])
 
-alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+alphabet = "abcdefghijklmnopqrstuvwxyz"
 
 
 # learning_manager class :
@@ -43,6 +43,7 @@ class LearningManager():
 		if (self.mode =='PCA_cluster'):
 			if (self.all_children_paths) :
 				for letter in alphabet:
+					print letter
 					self.estimator[letter] = stroke.clusterize(self.getDataSet(letter), self.nbClusters)
         
 			else:

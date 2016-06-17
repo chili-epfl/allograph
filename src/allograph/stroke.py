@@ -11,6 +11,8 @@ from scipy import interpolate
 import math
 import random
 from sklearn.cluster import KMeans
+from sklearn import svm
+import math
 
 class Stroke:
     """ a stroke object is a collection of x coordinates and y coordinates
@@ -431,10 +433,11 @@ def childDemoFromRobotStroke(RobotStrokes):
         childStrokes.append(currentStroke)
     return childStrokes
 
-
+"""Transform a stroke into an array of 140 floats"""
 def strokeToArray(aStroke):
     return (np.append(np.array(aStroke.x), np.array(aStroke.y)))
-	
+
+"""Transform an array of 140 floats into a stroke"""	
 def arrayToStroke(array):
     newStroke = Stroke()
     newStroke.stroke_from_xxyy(array)
@@ -442,19 +445,23 @@ def arrayToStroke(array):
     newStroke.uniformize()
     return newStroke
     
+"""Clustering using k'means algorithm"""    
 def clusterize(dataSet, nbClusters):
 	estimator = KMeans(n_clusters=nbClusters,init='k-means++')
+	print "clustering:"
 	estimator.fit(dataSet)
 	return estimator
-	
+
+"""Classify the data set given as input"""	
 def classify(dataSet, estimator):
 	clf = svm.SVC()
 	clf.fit(dataSet, estimator.labels_)
 	return clf
-	
+
+"""Perform a PCA on dataSet"""	
 def performPCA(dataSet, numShapesInDataset, numPointsInShapes, num_components):
 	"""Creating the matrix to project"""
-	dataMat = np.array(dataSet).reshape((numShapesInDataset, numPointsInShapes*2))
+	dataMat = np.array(dataSet).reshape((numShapesInDataset, numPointsInShapes))
 	
 	"""Creating the covariance matrix"""
 	covarMat = np.cov(dataMat.T)
@@ -465,7 +472,7 @@ def performPCA(dataSet, numShapesInDataset, numPointsInShapes, num_components):
 	"""Taking the first num_components eigen vectors and values, and the center of the space."""
 	principleComponents = np.real(eigVecs[:, 0:num_components])
 	principleValues = np.real(eigVals[0:num_components])
-	meanShape = dataMat.mean(0).reshape((numPointsInShapes * 2, 1))
+	meanShape = dataMat.mean(0).reshape((numPointsInShapes, 1))
 	return principleComponents, principleValues, meanShape
 	
 """Helper function to project a letter on the eigen space"""
@@ -473,8 +480,8 @@ def __project(letter, principleComponents, meanShape, num_components):
 	return np.dot(principleComponents.T, (letter.reshape(-1, 1) - meanShape)).reshape(num_components,)
 	
 """Helper function to project a letter back to the regular space"""
-def __projectBack(letter, principleComponents, meanShape, num_components):
-	return (meanShape + np.dot(principleComponents, letter).reshape(-1, 1)).reshape(numPointsInShapes*2, )
+def __projectBack(letter, principleComponents, meanShape, numPointsInShapes):
+	return (meanShape + np.dot(principleComponents, letter).reshape(-1, 1)).reshape(numPointsInShapes, )
 
 
 """Helper funciton to project all the centroids to the eigen space"""	
@@ -483,7 +490,7 @@ def _projectCentroids(estimator, num_components):
 	i = 0
 	"""loop over the centroids and project them"""
 	for aCentroid in estimator.cluster_centers_:
-		projected[i] = stroke.__project(aCentroid)
+		projected[i] = __project(aCentroid)
 		i = i + 1
 	return projected
 		
@@ -497,14 +504,14 @@ def _projectClusters(dataSet, estimator, num_components, principleComponents, pr
 		"""Take only the letters in the cluster"""
 		filteredLetters = filter(lambda x: estimator.predict(np.array(x).reshape(1,-1)) == i, dataSet)
 		"""Project the letters on the eigenspace"""
-		projectedLetters = map(lambda letter: stroke.__project(letter, principleComponents, meanShape, num_components), filteredLetters)
+		projectedLetters = map(lambda letter: __project(letter, principleComponents, meanShape, num_components), filteredLetters)
 		varNormalized = []
 		"""loop over the eigenvectors"""
 		for j in range(num_components):
 			"""Compute the normalized variance"""
 			varNormalized.append(np.var(map(lambda x: x[j], projectedLetters))/principleValues[j])
 		"""create final tuple with the normalized variance and the coordinate of the centroid"""
-		finalTuples = zip(varNormalized, stroke._projectCentroids(estimator, num_components)[i])
+		finalTuples = zip(varNormalized, _projectCentroids(estimator, num_components)[i])
 		projected[i] = np.array(finalTuples)
 		i = i + 1
 	return projected
@@ -512,7 +519,7 @@ def _projectClusters(dataSet, estimator, num_components, principleComponents, pr
 """Select the smallest variance dimension of the eigenspace"""
 def _getMoreImportantDimension(dataSet, estimator, num_components, principleComponents, principleValues, meanShape):
 	tuples = []
-	for cluster in stroke._projectClusters(dataSet, estimator, num_components, principleComponents, principleValues, meanShape):
+	for cluster in _projectClusters(dataSet, estimator, num_components, principleComponents, principleValues, meanShape):
 		dim = -1
 		diff = np.Infinity
 		for i in range(num_components):
@@ -525,23 +532,25 @@ def _getMoreImportantDimension(dataSet, estimator, num_components, principleComp
 	
 """Projects onto the eigenspace modify the most important coordinate and project back to the regular space"""
 def modifyCoordinates(lastState, dataSet, estimator, factor, num_components):
-	letter = stroke.strokeToArray(lastState)
-	label = (stroke.classify(dataSet, estimator)).predict(np.array(aLetter).reshape(1, -1))[0]
+	aLetter = strokeToArray(lastState)
+	label = (classify(dataSet, estimator)).predict(np.array(aLetter).reshape(1, -1))[0]
+	print len(dataSet)
+	print len(dataSet[0])
 	principleComponents, principleValues, meanShape = performPCA(dataSet, len(dataSet), len(dataSet[0]), num_components)
 	dim = self._getMoreImportantDimension(dataSet, estimator, num_components, principleComponents, principleValues, meanShape)[label]
-	coordinates = stroke.__project(letter, principleComponents, meanShape, num_components)
+	coordinates = __project(aLetter, principleComponents, meanShape, num_components)
 	coordinates[dim] += factor
-	return stroke.arrayToStroke(stroke.__projectBack(coordinates, principleComponents, meanShape, num_components))
+	return arrayToStroke(__projectBack(coordinates, principleComponents, meanShape, num_components))
 	
 """Projects onto the eigenspace modify a random coordinate and project back to the regular space"""
 def modifyCoordinatesRandom(lastState, dataSet, estimator, factor, num_components):
-	letter = stroke.strokeToArray(lastState)
-	label = (stroke.classify(dataSet, estimator)).predict(np.array(aLetter).reshape(1, -1))[0]
+	aLetter = strokeToArray(lastState)
+	label = (classify(dataSet, estimator)).predict(np.array(aLetter).reshape(1, -1))[0]
 	principleComponents, principleValues, meanShape = performPCA(dataSet, len(dataSet), len(dataSet[0]), num_components)
 	dim = random.randrange(num_components)
-	coordinates = stroke.__project(letter, principleComponents, meanShape, num_components)
+	coordinates = __project(aLetter, principleComponents, meanShape, num_components)
 	coordinates[dim] += factor
-	return stroke.arrayToStroke(stroke.__projectBack(coordinates, principleComponents, meanShape, num_components))
+	return arrayToStroke(__projectBack(coordinates, principleComponents, meanShape, len(dataSet[0])))
 
 #/////////////////////////////END ADDED///////////////////////////////////	
     

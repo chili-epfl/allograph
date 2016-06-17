@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 import math
+import random
+from sklearn.cluster import KMeans
 
 class Stroke:
     """ a stroke object is a collection of x coordinates and y coordinates
@@ -56,83 +58,7 @@ class Stroke:
         y1 = np.copy(np.array(self.y))
         return Stroke(x1 * num, y1 * num)
         
-    def strokeToImage(self, dimension):
-		
-		if ( dimension <= 0 ):
-			raise ValueError('dimension should be strictly positive')
-			
-		image = np.zeros(shape=(dimension,dimension))
-		
-		"""Normalize according to the greatest dimension"""
-		self.normalize()
-	
-		"""Initialization of the variables to save the last values"""
-		prev_i = 0.0
-		prev_j = 0.0
-		"""Used for the case where prev does not exist"""
-		first = True
-		
-		for i,j in zip(self.get_x(),self.get_y()):
-			
-			"""adjust i and j according to the dimension"""
-			i = int(i*(dimension-1))
-			j = int(j*(dimension-1))
-			
-			"""fills the pixel"""
-			image[j,i] = 1
-	    
-			"""if first do not consider last value"""
-			if (first):
-				first = False
-				prev_i = i
-				prev_j = j
-				continue
-				
-			"""compute the difference between current and last value"""
-			diff_i = i - prev_i
-			diff_j = j - prev_j
-	    
-			if (abs(diff_j) >= abs(diff_i)):
-				current_j = prev_j
-				if (diff_i != 0):
-					ratio = int(diff_j/abs(diff_i))
-					if (ratio == 0):
-						continue
-					sign_i = diff_i/abs(diff_i)
-					for col in range(prev_i, i, sign_i):
-						for row in range(current_j,current_j+ratio, ratio/abs(ratio)):
-							image[row,col] = 1
-						current_j += ratio;
-				else:
-					if (diff_j == 0):
-						continue
-					ratio = diff_j
-					for row in range(current_j,current_j + ratio, ratio/abs(ratio)):
-						image[row,i] = 1
-		
-			
-			else:
-				current_i = prev_i
-				if(diff_j != 0):
-					ratio = int(diff_i/abs(diff_j))
-					if (ratio == 0):
-						continue
-					sign_j = diff_j/abs(diff_j)
-					for row in range(prev_j, j, sign_j):
-						for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
-							image[row,col] = 1
-						current_i += ratio
-				else:
-					if (diff_i == 0):
-						continue
-					ratio = diff_i
-					for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
-						image[j,col] = 1
-		
-		    
-			prev_i = i
-			prev_j = j
-		return image
+    
 		    
     def reset(self):
         self.x = []
@@ -146,8 +72,9 @@ class Stroke:
 
     def plot(self):
         plt.plot(self.x, -np.array(self.y), 'b')
-        plt.show()
+        #~ plt.show()
         # plt.plot(self.x,self.y,'r.')
+        
     def plot_compare(self, stroke2):
         plt.plot(self.x, -np.array(self.y), 'b')
         plt.plot(stroke2.x, -np.array(stroke2.y), 'r')
@@ -384,41 +311,117 @@ class Stroke:
         else:
             return [self]
 
-        def split_by_density(self, treshold=3):
-            """H -> |-| """
+	def split_by_density(self, treshold=3):
+		"""H -> |-| """
+		splited_strokes = []
+		current_stroke = Stroke()
+		stroke_length, _ = self.euclidian_length()
+		mean_dist = stroke_length / (self.get_len() + 0.000001)
+		if len(self.x) > 3:
+			current_stroke.append(self.x[0], self.y[0])
+			for i in range(len(self.x) - 2):
+				x1 = float(self.x[i])
+				x2 = float(self.x[i + 1])
+				y1 = float(self.y[i])
+				y2 = float(self.y[i + 1])
+				dist = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+				density = dist / mean_dist
+				current_stroke.append(x2, y2)
+				if density > 3:
+					splited_strokes.append(current_stroke)
+					current_stroke.reset()
+			if current_stroke.get_x():
+				splited_strokes.append(current_stroke)
 
-        splited_strokes = []
-        current_stroke = Stroke()
-
-        stroke_length, _ = self.euclidian_length()
-
-        mean_dist = stroke_length / (self.get_len() + 0.000001)
-
-        if len(self.x) > 3:
-            current_stroke.append(self.x[0], self.y[0])
-            for i in range(len(self.x) - 2):
-                x1 = float(self.x[i])
-                x2 = float(self.x[i + 1])
-                y1 = float(self.y[i])
-                y2 = float(self.y[i + 1])
-                dist = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-                density = dist / mean_dist
-                current_stroke.append(x2, y2)
-                if density > 3:
-                    splited_strokes.append(current_stroke)
-                    current_stroke.reset()
-            if current_stroke.get_x():
-                splited_strokes.append(current_stroke)
-
-            return splited_strokes
-        else:
-            return [self]
-   
+			return splited_strokes
+		else:
+			return [self]
+	
+	#/////////////////////////////ADDED///////////////////////////////////	
+	def strokeToImage(self, dimension):
+		
+		if ( dimension <= 0 ):
+			raise ValueError('dimension should be strictly positive')
+			
+		image = np.zeros(shape=(dimension,dimension))
+		
+		"""Normalize according to the greatest dimension"""
+		self.normalize()
+	
+		"""Initialization of the variables to save the last values"""
+		prev_i = 0.0
+		prev_j = 0.0
+		"""Used for the case where prev does not exist"""
+		first = True
+		
+		for i,j in zip(self.get_x(),self.get_y()):
+			
+			"""adjust i and j according to the dimension"""
+			i = int(i*(dimension-1))
+			j = int(j*(dimension-1))
+			
+			"""fills the pixel"""
+			image[j,i] = 1
+	    
+			"""if first do not consider last value"""
+			if (first):
+				first = False
+				prev_i = i
+				prev_j = j
+				continue
+				
+			"""compute the difference between current and last value"""
+			diff_i = i - prev_i
+			diff_j = j - prev_j
+	    
+			if (abs(diff_j) >= abs(diff_i)):
+				current_j = prev_j
+				if (diff_i != 0):
+					ratio = int(diff_j/abs(diff_i))
+					if (ratio == 0):
+						continue
+					sign_i = diff_i/abs(diff_i)
+					for col in range(prev_i, i, sign_i):
+						for row in range(current_j,current_j+ratio, ratio/abs(ratio)):
+							image[row,col] = 1
+						current_j += ratio;
+				else:
+					if (diff_j == 0):
+						continue
+					ratio = diff_j
+					for row in range(current_j,current_j + ratio, ratio/abs(ratio)):
+						image[row,i] = 1
+		
+			
+			else:
+				current_i = prev_i
+				if(diff_j != 0):
+					ratio = int(diff_i/abs(diff_j))
+					if (ratio == 0):
+						continue
+					sign_j = diff_j/abs(diff_j)
+					for row in range(prev_j, j, sign_j):
+						for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
+							image[row,col] = 1
+						current_i += ratio
+				else:
+					if (diff_i == 0):
+						continue
+					ratio = diff_i
+					for col in range(current_i, current_i+ratio, ratio/abs(ratio)):
+						image[j,col] = 1
+		
+		    
+			prev_i = i
+			prev_j = j
+		return image
 
 
 # static functions:
 # ------------------
-def childFromRobot(RobotStrokes):
+
+#/////////////////////////////ADDED///////////////////////////////////
+def childDemoFromRobotStroke(RobotStrokes):
     childStrokes = []
     currentStroke = Stroke()
     for i in range(len(RobotStrokes) - 1):
@@ -428,17 +431,133 @@ def childFromRobot(RobotStrokes):
         childStrokes.append(currentStroke)
     return childStrokes
 
-
+"""Transform a stroke into an array of 140 floats"""
 def strokeToArray(aStroke):
     return (np.append(np.array(aStroke.x), np.array(aStroke.y)))
-	
 
+"""Transform an array of 140 floats into a stroke"""	
+def arrayToStroke(array):
+    newStroke = Stroke()
+    newStroke.stroke_from_xxyy(array)
+    newStroke.downsampleShape(70)
+    newStroke.uniformize()
+    return newStroke
+    
+"""Clustering using k'means algorithm"""    
+def clusterize(dataSet, nbClusters):
+	estimator = KMeans(n_clusters=nbClusters,init='k-means++')
+	print "//////////////////////////////////////////////////////////////////////////////////////////////////////"
+	print dataSet.shape
+	estimator.fit(dataSet)
+	return estimator
+
+"""Classify the data set given as input"""	
+def classify(dataSet, estimator):
+	clf = svm.SVC()
+	clf.fit(dataSet, estimator.labels_)
+	return clf
+
+"""Perform a PCA on dataSet"""	
+def performPCA(dataSet, numShapesInDataset, numPointsInShapes, num_components):
+	"""Creating the matrix to project"""
+	dataMat = np.array(dataSet).reshape((numShapesInDataset, numPointsInShapes*2))
+	
+	"""Creating the covariance matrix"""
+	covarMat = np.cov(dataMat.T)
+		
+	"""Generating the eigen vectors and eigen values"""
+	eigVals, eigVecs = np.linalg.eig(covarMat)
+
+	"""Taking the first num_components eigen vectors and values, and the center of the space."""
+	principleComponents = np.real(eigVecs[:, 0:num_components])
+	principleValues = np.real(eigVals[0:num_components])
+	meanShape = dataMat.mean(0).reshape((numPointsInShapes * 2, 1))
+	return principleComponents, principleValues, meanShape
+	
+"""Helper function to project a letter on the eigen space"""
+def __project(letter, principleComponents, meanShape, num_components):
+	return np.dot(principleComponents.T, (letter.reshape(-1, 1) - meanShape)).reshape(num_components,)
+	
+"""Helper function to project a letter back to the regular space"""
+def __projectBack(letter, principleComponents, meanShape, num_components):
+	return (meanShape + np.dot(principleComponents, letter).reshape(-1, 1)).reshape(numPointsInShapes*2, )
+
+
+"""Helper funciton to project all the centroids to the eigen space"""	
+def _projectCentroids(estimator, num_components):
+	projected = np.empty((len(estimator.cluster_centers_), num_components))
+	i = 0
+	"""loop over the centroids and project them"""
+	for aCentroid in estimator.cluster_centers_:
+		projected[i] = stroke.__project(aCentroid)
+		i = i + 1
+	return projected
+		
+		
+"""Computes for each cluster the normalized variance on each dimension"""
+def _projectClusters(dataSet, estimator, num_components, principleComponents, principleValues, meanShape):
+	projected = np.empty((len(estimator.cluster_centers_), num_components, 2))
+	i = 0
+	"""loop over the centroids"""
+	for aCentroid in estimator.cluster_centers_:
+		"""Take only the letters in the cluster"""
+		filteredLetters = filter(lambda x: estimator.predict(np.array(x).reshape(1,-1)) == i, dataSet)
+		"""Project the letters on the eigenspace"""
+		projectedLetters = map(lambda letter: stroke.__project(letter, principleComponents, meanShape, num_components), filteredLetters)
+		varNormalized = []
+		"""loop over the eigenvectors"""
+		for j in range(num_components):
+			"""Compute the normalized variance"""
+			varNormalized.append(np.var(map(lambda x: x[j], projectedLetters))/principleValues[j])
+		"""create final tuple with the normalized variance and the coordinate of the centroid"""
+		finalTuples = zip(varNormalized, stroke._projectCentroids(estimator, num_components)[i])
+		projected[i] = np.array(finalTuples)
+		i = i + 1
+	return projected
+	
+"""Select the smallest variance dimension of the eigenspace"""
+def _getMoreImportantDimension(dataSet, estimator, num_components, principleComponents, principleValues, meanShape):
+	tuples = []
+	for cluster in stroke._projectClusters(dataSet, estimator, num_components, principleComponents, principleValues, meanShape):
+		dim = -1
+		diff = np.Infinity
+		for i in range(num_components):
+			if (diff > cluster[i][1]):
+				diff = cluster[i][1]
+				dim = i
+		tuples.append(dim)
+			
+	return tuples
+	
+"""Projects onto the eigenspace modify the most important coordinate and project back to the regular space"""
+def modifyCoordinates(lastState, dataSet, estimator, factor, num_components):
+	letter = stroke.strokeToArray(lastState)
+	label = (stroke.classify(dataSet, estimator)).predict(np.array(aLetter).reshape(1, -1))[0]
+	principleComponents, principleValues, meanShape = performPCA(dataSet, len(dataSet), len(dataSet[0]), num_components)
+	dim = self._getMoreImportantDimension(dataSet, estimator, num_components, principleComponents, principleValues, meanShape)[label]
+	coordinates = stroke.__project(letter, principleComponents, meanShape, num_components)
+	coordinates[dim] += factor
+	return stroke.arrayToStroke(stroke.__projectBack(coordinates, principleComponents, meanShape, num_components))
+	
+"""Projects onto the eigenspace modify a random coordinate and project back to the regular space"""
+def modifyCoordinatesRandom(lastState, dataSet, estimator, factor, num_components):
+	letter = stroke.strokeToArray(lastState)
+	label = (stroke.classify(dataSet, estimator)).predict(np.array(aLetter).reshape(1, -1))[0]
+	principleComponents, principleValues, meanShape = performPCA(dataSet, len(dataSet), len(dataSet[0]), num_components)
+	dim = random.randrange(num_components)
+	coordinates = stroke.__project(letter, principleComponents, meanShape, num_components)
+	coordinates[dim] += factor
+	return stroke.arrayToStroke(stroke.__projectBack(coordinates, principleComponents, meanShape, num_components))
+
+#/////////////////////////////END ADDED///////////////////////////////////	
+    
 def plot_list(strokes):
     length = len(strokes)
+    
     for i in range(length):
-        plt.subplot(1, length, i)
-        strokes[i].plot()
-        # plt.show()
+         plt.plot(strokes[i].x, -np.array(strokes[i].y))
+		
+    #~ plt.show()
 
 
 def save_plot_list(strokes, name):
