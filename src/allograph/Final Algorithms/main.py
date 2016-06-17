@@ -7,9 +7,11 @@ import LetterLearnerwoClusterization as oldL
 import numpy as np
 import matplotlib.pyplot as plt
 import stroke
+import learning_manager as lm
  
 
 def main():
+	
 	l = l1.LetterLearner(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"],'a', 6, 10)
 	#~ oldLetterLearner = oldL.LetterLearnerwoClusterization(10, newLetterLearner.X_train)
 	#~ l = l2.LetterLearnerOnClusters(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"],'a', 6, 100)
@@ -19,9 +21,9 @@ def main():
 	l.clusterize()
 	l.classify()
 	l.performPCA()
-	for le1, le2, le3 in zip(l.testAlgoV2(0.0), l.testAlgoV2(0.5), l.testAlgoV3([0.5, 0.25])):
-		l.printLetters([le1, le2, le3])
-		plt.title("original vs transformation +0.5 vs +0.5,+0.25")
+	for le1, le2 in zip(l.testAlgoV2(0.0), l.testAlgoV2(1.0)):
+		l.printLetters([le1, le2])
+		plt.title("original vs transformation +1.0")
 		plt.show()
 	#~ oldLetterLearner.performPCA()
 	#~ print ll.numShapesInDataset
@@ -39,7 +41,7 @@ def main():
 	#~ a = []
 	#~ b = []
 	#~ newLetterLearner.infoDataSet(["/home/guillaume/Documents/projet_chili/cowriter_logs/Normandie/robot_progress","/home/guillaume/Documents/projet_chili/cowriter_logs/EIntGen/robot_progress"])
-	"""///////////////////////////////////////////////////////////////////////////////////////TEST OLD VS NEW///////////////////////////////////////////////////////////////////////////////////////////////////////////////"""
+	#~ """///////////////////////////////////////////////////////////////////////////////////////TEST OLD VS NEW///////////////////////////////////////////////////////////////////////////////////////////////////////////////"""
 	#~ for (le1, le2, le3, le4, le5, le6, le7, le8, le9) in zip(newLetterLearner.testAlgoV1(0.0), newLetterLearner.testAlgoV1(-2.0), newLetterLearner.testAlgoV1(-1.0), newLetterLearner.testAlgoV1(1.0), newLetterLearner.testAlgoV1(2.0),
 	 #~ oldLetterLearner.testAlgo(xTest, -2.0), oldLetterLearner.testAlgo(xTest,-1.0), oldLetterLearner.testAlgo(xTest,1.0), oldLetterLearner.testAlgo(xTest,2.0)):
 	#~ for (le5, le9) in zip(newLetterLearner.testAlgoV1(1.0), oldLetterLearner.testAlgo(xTest,1.0)):
@@ -76,7 +78,7 @@ def main():
 		#~ newLetterLearner.printLetters([newLetterLearner.getEstimator().cluster_centers_[res[1]], res[0]])
 		#~ plt.show()
 		
-	newLetterLearner.childrenNamePerCluster()
+	#~ newLetterLearner.childrenNamePerCluster()
 	
 	#~ xTest = newLetterLearner.X_test
 	#~ for (le1, le2, le3) in zip(newLetterLearner.testAlgoV2([0.0], 1), newLetterLearner.testAlgoV2([1.0, 0.3], 2), oldLetterLearner.testAlgo(xTest,1.0)):

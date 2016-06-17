@@ -43,7 +43,7 @@ class LetterLearner:
 		
 		"""Get the children's strokes from the robot's."""
 		for key in self.strokes:
-			self.strokes[key] = stroke.childFromRobot(self.strokes[key])
+			self.strokes[key] = stroke.childDemoFromRobotStroke(self.strokes[key])
 
 		"""Builds an array of all the strokes of all the children and a list of all the children."""
 		for key in self.strokes:
