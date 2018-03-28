@@ -366,19 +366,21 @@ def midway(stroke1, stroke2, coef = 0):
     return Stroke(x,y)
 
 
-def weigthedSum(stroke1, stroke2, weight1 = 0.5):
+def weigthedSum(stroke1, stroke2, weight = 0.5):
     x1 = np.array(stroke1.x)
     x2 = np.array(stroke2.x)
     y1 = np.array(stroke1.y)
     y2 = np.array(stroke2.y)
 
-    mu = weight1
-    nu = 1-mu
+    if weight > 1.0 :
+        weight = 1.0/weight
+    mu = weight
+    nu = 1.0 - mu
 
     x = (mu*x1+nu*x2)
     y = (mu*y1+nu*y2)
-    print("weight")
     return Stroke(x,y)
+    #return midway(stroke1,stroke2,(weight-0.5)*4)
 
 
 

@@ -65,7 +65,7 @@ class LearningManager():
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
 
-    def respond_to_demonstration_word(self, demonstrations, mode='simple', mode_param=0.5): #mutual_modeling will act here
+    def respond_to_demonstration_word(self, demonstrations, mode='midway', mode_param=0.5): #mutual_modeling will act here
         if mode == 'midway':
             for letter,stroke in demonstrations:
                 learned_stroke = stroke.midway(stroke, self.generated_letters[letter])
@@ -76,7 +76,7 @@ class LearningManager():
         if mode == 'simple':
             for letter,stroke in demonstrations:
                 learned_stroke = stroke.weigthedSum(stroke, self.generated_letters[letter],mode_param)
-
+                stroke.save_plot_list(learned_stroke,"learned_"+letter)
                 self.generated_letters[letter] = learned_stroke
                 save_learned_allograph(self.robot_data, letter, learned_stroke)
                 score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
@@ -84,7 +84,7 @@ class LearningManager():
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
 
-    def respond_to_demonstration_letter(self, demonstration, letter, mode='simple',mode_param=0.5):
+    def respond_to_demonstration_letter(self, demonstration, letter, mode='midway',mode_param=0.5):
         demo_stroke = Stroke()
         demo_stroke.stroke_from_xxyy(np.reshape(demonstration,len(demonstration)))
         #demo_stroke.uniformize()
