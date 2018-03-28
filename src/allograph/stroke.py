@@ -74,7 +74,7 @@ class Stroke:
         strokes = []
 
         dists = []
-        path = zip(self.x,self.y) 
+        path = zip(self.x,self.y)
         for (x1,y1),(x2,y2) in zip(path[:-1],path[1:]):
             dists.append(np.sqrt((x1-x2)**2+(y1-y2)**2))
         mean_dist = np.mean(dists)
@@ -181,7 +181,7 @@ class Stroke:
 
 
     def revert(self):
-        """ revert a stroke : [x1,x2,x3] --> [x3,x2,x1] """ 
+        """ revert a stroke : [x1,x2,x3] --> [x3,x2,x1] """
 
         x = self.x[::-1]
         y = self.y[::-1]
@@ -366,6 +366,22 @@ def midway(stroke1, stroke2, coef = 0):
     return Stroke(x,y)
 
 
+def weigthedSum(stroke1, stroke2, weight1 = 0.5):
+    x1 = np.array(stroke1.x)
+    x2 = np.array(stroke2.x)
+    y1 = np.array(stroke1.y)
+    y2 = np.array(stroke2.y)
+
+    mu = weight1
+    nu = 1-mu
+
+    x = (mu*x1+nu*x2)
+    y = (mu*y1+nu*y2)
+    print("weight")
+    return Stroke(x,y)
+
+
+
 def smart_split(strokes):
     """ split at non-differentiable points of each stroke of 'strokes' """
 
@@ -543,10 +559,10 @@ def group_normalize_wrt_max(strokes):
     return normalized_strokes
 
 def best_aligment(stroke1, stroke2, indice=None):
-    """compare naive euclidian distance, smart euclidian distance 
+    """compare naive euclidian distance, smart euclidian distance
        and smart euclidian distance after reverting one of the two strokes
        stroke1 and stroke2 must have the same size, otherwize we take the size of the smallest and cut the other"""
-    
+
     # PATHOLOGIC CASES :
     if min(len(stroke1.x),len(stroke2.x))==0:
         return 0,0,0,0,0,0
@@ -585,7 +601,7 @@ def best_aligment(stroke1, stroke2, indice=None):
     return nx1,ny1,np.mean(d2),np.mean(m2),d2,m2
 
 def align(stroke1, stroke2):
-    """aligne two strokes in order to compute 
+    """aligne two strokes in order to compute
        the euclidian distance between them in a smart way"""
 
     x1 = np.array(stroke1.x)
@@ -646,7 +662,7 @@ def euclidian_distance(stroke1, stroke2):
 
 def identify(strokes, stroke, closest=True):
     """ look for the best matching postion of a stroke inside a concatenation of a multistroke drawing """
-    
+
     # better : 1) unifore stroke/stroke ~ relative distance, 2) concatenate
 
     stroke_length,_ = stroke.euclidian_length()
@@ -687,7 +703,7 @@ def identify(strokes, stroke, closest=True):
     #print best_score
 
     split_points = draw.split_non_differentiable_points(1.5)
-    
+
     #plt.plot(draw.x,draw.y,'bo')
     #plt.plot(draw.x[pose:pose+stroke.len],draw.y[pose:pose+stroke.len],'rs')
     #plt.plot(split_points.x,split_points.y,'gs')
@@ -705,7 +721,7 @@ def compare(strokes1, strokes2):
     for stroke_i in strokes1:
         match = identify(strokes2,stroke_i)
         score += match
-    
+
     #draw1 = concat(strokes1)
     #draw2 = concat(strokes2)
     #draw1_length,_ = draw1.euclidian_length()
@@ -716,7 +732,7 @@ def compare(strokes1, strokes2):
     return score
 
 def cloud_dist(stroke1, stroke2):
-    
+
     couples = set()
     distance = 0
     # 1 --> 2
@@ -745,4 +761,3 @@ def cloud_dist(stroke1, stroke2):
             couples.add((i,j))
 
     return distance/float(len(couples))
- 

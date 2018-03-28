@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-learning allograph of letters from demonstration 
+learning allograph of letters from demonstration
 using different strategies and different metrics
 """
 
@@ -27,7 +27,7 @@ alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 class LearningManager():
 
-    def __init__(self, generate_path, demo_path, robot_path, ref_path):
+    def __init__(self, generate_path, demo_path, robot_path, ref_path, mode, mode_param):
         self.generate_path = generate_path
         self.demo_path = demo_path
         self.robot_path = robot_path
@@ -38,6 +38,8 @@ class LearningManager():
         self.word_seen = set()
         self.current_word = ""
         self.refs = read_ref_data(self.ref_path,6) #6=line of the ref in dataset
+        self.mode = mode
+        self.mode_param = mode_param
 
 # the path to the ref is something like :
 #fileName = inspect.getsourcefile(ShapeModeler)
@@ -59,11 +61,11 @@ class LearningManager():
             for letter in alphabet:
                 stroke = self.robot_data[letter][-1]
                 self.generated_letters[letter] = stroke
-        #if mode = 'PCA' 
+        #if mode = 'PCA'
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
 
-    def respond_to_demonstration_word(self, demonstrations, mode='midway'): #mutual_modeling will act here
+    def respond_to_demonstration_word(self, demonstrations, mode='simple', mode_param=0.5): #mutual_modeling will act here
         if mode == 'midway':
             for letter,stroke in demonstrations:
                 learned_stroke = stroke.midway(stroke, self.generated_letters[letter])
@@ -71,21 +73,33 @@ class LearningManager():
                 self.generated_letters[letter] = learned_stroke
                 save_learned_allograph(self.robot_data, letter, learned_stroke)
                 score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
-        #if mode = 'PCA' 
+        if mode == 'simple':
+            for letter,stroke in demonstrations:
+                learned_stroke = stroke.weigthedSum(stroke, self.generated_letters[letter],mode_param)
+
+                self.generated_letters[letter] = learned_stroke
+                save_learned_allograph(self.robot_data, letter, learned_stroke)
+                score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
+        #if mode = 'PCA'
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
 
-    def respond_to_demonstration_letter(self, demonstration, letter, grade, mode='midway'):
+    def respond_to_demonstration_letter(self, demonstration, letter, mode='simple',mode_param=0.5):
         demo_stroke = Stroke()
         demo_stroke.stroke_from_xxyy(np.reshape(demonstration,len(demonstration)))
         #demo_stroke.uniformize()
         demo_stroke.normalize_wrt_max()
         if mode == 'midway':
-            learned_stroke = stroke.midway(demo_stroke, self.generated_letters[letter], grade)
+            learned_stroke = stroke.midway(demo_stroke, self.generated_letters[letter], mode_param)
             self.generated_letters[letter] = learned_stroke
             save_learned_allograph(self.robot_path, letter, learned_stroke)
             _,score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
-        #if mode = 'PCA' 
+        if mode == 'simple':
+            learned_stroke = stroke.weigthedSum(demo_stroke, self.generated_letters[letter], mode_param)
+            self.generated_letters[letter] = learned_stroke
+            save_learned_allograph(self.robot_path, letter, learned_stroke)
+            _,score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
+        #if mode = 'PCA'
         #if mode = 'sigNorm' (mixture of sigma-log-normal)
         #if mode = 'CNN' (1-D convolutionnal neural networks)
         return self.shape_message(letter),score
