@@ -109,7 +109,7 @@ class LearningManager():
         stroke = self.generated_letters[letter]
         path = np.concatenate((stroke.x, stroke.y))
         shape = Shape(path=path, shapeType=letter)
-	return shape
+        return shape
 
     def shape_message_word(self):
         shapes = []
@@ -143,7 +143,7 @@ def read_data(datasetDirectory, lines_to_jump):
                             try:
                                 data_stroke.normalize_wrt_max()
                             except ValueError:
-                                print name+" is empty"
+                                print(name+" is empty")
                             data_letters.setdefault(name,[]).append(data_stroke)
             except IOError:
                 raise RuntimeError("no reading permission for file"+dataset )

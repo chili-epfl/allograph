@@ -9,3 +9,6 @@ different metrics and different learning strategies from demonstration.
 Different metrics including : euclidian distance in cartesian space, euclidian
 distance in eigenspace with PCA, decomposition in mixture of sigma-log-normal
 distributions, Recurrent neural networks.
+
+## Dependencies
+- [recordtype](https://pypi.org/project/recordtype/)

@@ -169,9 +169,9 @@ class Stroke:
                     new_shape.append(new_x, new_y)
 
                 except IndexError:
-                    print i*step
-                    print biggest_smoller_point
-                    print scale
+                    print(i*step)
+                    print(biggest_smoller_point)
+                    print(scale)
             #new_shape.append(self.x[-1], self.y[-1])
 
 
