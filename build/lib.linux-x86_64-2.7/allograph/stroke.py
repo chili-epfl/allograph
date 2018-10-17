@@ -169,9 +169,9 @@ class Stroke:
                     new_shape.append(new_x, new_y)
 
                 except IndexError:
-                    print i*step
-                    print biggest_smoller_point
-                    print scale
+                    print(i*step)
+                    print(biggest_smoller_point)
+                    print(scale)
             #new_shape.append(self.x[-1], self.y[-1])
 
 
@@ -367,6 +367,8 @@ def midway(stroke1, stroke2, coef = 0):
 
 
 def weigthedSum(stroke1, stroke2, weight = 0.5):
+
+    print(weight)
     x1 = np.array(stroke1.x)
     x2 = np.array(stroke2.x)
     y1 = np.array(stroke1.y)
