@@ -9,10 +9,15 @@ import math
 import copy
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 from scipy import interpolate
 from stroke import Stroke
+
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+from matplotlib.collections import LineCollection
+from matplotlib.colors import ListedColormap, BoundaryNorm
+from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
+from matplotlib.cbook import get_sample_data
 
 def merge_words(words_list):
     """
@@ -43,7 +48,7 @@ def merge_words(words_list):
     # Return the reconstructed word and individual letters that are normalized
     return rescaled_letters, merged_letters
 
-def merge_letters(letters_list):
+def merge_letters(letters_list, fast_mode = True):
     """
     Combines all the letter class objects based on a stroke by stroke process
     """
@@ -53,8 +58,9 @@ def merge_letters(letters_list):
     letter_properties = dict()
     for idx, letter in enumerate(preprocessed_letters):
         letter.normalize_wrt_max()
-        letter.uniformize_strokes_with_step(step=0.01)
-        letter.combine_strokes_if_low_density(density_limit=10)
+        if not fast_mode:
+            letter.uniformize_strokes_with_step(step=0.01)
+            letter.combine_strokes_if_low_density(density_limit=10)
         letter.uniformize_strokes_with_step(step=0.1)
 
     n_strokes = min([letter.n_strokes() for letter in preprocessed_letters])
@@ -71,7 +77,6 @@ def merge_letters(letters_list):
     combined_strokes_x, combined_strokes_y = [], []
 
     for i in range(n_strokes):
-        print(n_strokes)
         demonstration_strokes = [letter.stroke(i) for letter in preprocessed_letters]
         # Stroke by stroke weighted sum - Assumes all the strokes are of equal length
         x_list = [np.array(stroke.get_x()) for stroke in demonstration_strokes]
@@ -244,6 +249,9 @@ class Letter:
         self.compute_letter_properties()
 
     def normalize_wrt_max(self):
+        """
+        Normalizes all the strokes making up the letter
+        """
         #Normalize at the letter scale
         self.compute_letter_properties()
         max_range = max(self.width, self.height)
@@ -257,9 +265,10 @@ class Letter:
         self.compute_letter_properties()
 
     def scale_and_translate(self, s_x = 1, s_y = 1, t_x = 0, t_y = 0):
-        # Assumes normalization was done beforehand
-        # scale factor is multiplicative
-        # t_x and t_y are summed
+        """
+        Multiplies the coordinates by s then translates by t
+        Assumes normalization was done beforehand
+        """
 
         for stroke in self.strokes:
             x = np.array(stroke.get_x())*s_x+t_x
@@ -307,30 +316,51 @@ def compute_pen_up(x_pts, y_pts, density_limit = 3):
         pen_ups = [1]
     return pen_ups
 
-
-def plot_words(words_list, color_mode = None, title = ""):
+cmaps = ["cool", "autumn", "summer", "spring", "winter"]
+def plot_words(words_list, color_mode = "black", title = "", display_idx = False):
     fig=plt.figure(figsize=(10,10))
     plt.title(title)
     gs=GridSpec(len(words_list), max([len(word) for word in words_list]))
     ax_words = [fig.add_subplot(gs[i,:]) for i in range(len(words_list))]
 
     for ax, word in zip(ax_words, words_list):
+        idx_color = 0
         for letter in word:
-            print("New letter")
-            for stroke in letter.get_strokes():
-                print("x", stroke.get_x())
-                print("y", stroke.get_y())
-                ax.plot(stroke.get_x(), -np.array(stroke.get_y()), 'k')
-                if color_mode == None:
-                    print("Plot in single color")
+            for idx, stroke in enumerate(letter.get_strokes()):
+                x = stroke.get_x()
+                y = -np.array(stroke.get_y())
+                if color_mode == "black":
+                    ax.plot(x, y, 'k')
                 elif color_mode == "rainbow":
-                    print("Plot in with rainbow colors")
-                elif color_mode == "gradient":
-                    print("Plot with gradients")
-                elif color_mode == "rainbow_gradient":
-                    print("Plot with varying gradients")
-    plt.show()
-    #Put the start point? Put the number of strokes?
+                    ax.plot(x, y)
+                elif "gradient" in color_mode:
+                    cmap = cmaps[idx_color%len(cmaps)] if "rainbow" in color_mode else "viridis"
+                    points = np.array([x, y]).T.reshape(-1, 1, 2)
+                    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+                    dydx = np.array([i for i in range(len(x))])
+
+                    # Create a continuous norm to map from data points to colors
+                    norm = plt.Normalize(dydx.min(), dydx.max())
+                    lc = LineCollection(segments, cmap=cmap, norm=norm)
+                    # Set the values used for colormapping
+                    lc.set_array(dydx)
+                    lc.set_linewidth(2)
+                    line = ax.add_collection(lc)
+
+                idx_color = idx_color+1
+                print(idx_color, idx_color%len(cmaps))
+
+                if display_idx:
+                    bbox_props = dict(boxstyle="circle,pad=0.3", fc="k", lw=2)
+                    ax.annotate(idx+1,
+                        xy=(x[0], y[0]),
+                        xytext=(x[0], y[0]),
+                        color='w', size = 20,
+                        bbox=bbox_props)
+
+        ax.axis("equal")
+        plt.axis('off')
+    #plt.show()
 
 if __name__=="__main__":
     data = pickle.load( open( "merged_strokes_3_tipfjklx.pickle", "rb" ) )
@@ -359,5 +389,8 @@ if __name__=="__main__":
         words_list.append(participant_letters)
 
     rescaled_letters, merged_letters = merge_words(words_list)
-    plot_words(words_list, "original words")
-    plot_words([rescaled_letters], "merged_words")
+
+    for color_mode in ["black", "gradient", "rainbow", "rainbow_gradient"]:
+        plot_words(words_list, title="original words_{}".format(color_mode), color_mode = color_mode)
+        plot_words([rescaled_letters], title="merged_words_{}".format(color_mode), color_mode = color_mode)
+    plt.show()
