@@ -117,6 +117,7 @@ def read_ref_data(refDirectory, line_of_ref):
     for dataset in datasets:
         name = os.path.splitext(os.path.basename(dataset))[0]
         if name in alphabet:
+            print("Loading ref data {}".format(name))
             try:
                 with open(dataset, 'r') as data:
                     i=0
