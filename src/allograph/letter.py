@@ -33,8 +33,6 @@ def merge_words(words_list, fast_mode = True):
     # Merge the different demonstration letters provided
     merged_letters = [safe_merge_letters(x, fast_mode) for x in letter_demonstrations]
 
-    #NOTE : check from here and down
-
     # Reconstruct the word from the individual letters by rescaling and
     # translating them based on the original letter properties
     rescaled_letters = copy.deepcopy(merged_letters)
