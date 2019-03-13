@@ -101,7 +101,7 @@ def dist(x1,y1,x2,y2):
 class Letter:
     """ a letter object is a collection of strokes """
 
-    def __init__(self, x, y, pen_up = None):
+    def __init__(self, x, y):
         """
         Provided only x an y, they are expected to be a list of list of coordinates
         e.g. x = [[0,1,2], [3,4,5], [6,7,8]], y = [[9,10,11], [12,13,14], [15,16,17]],
@@ -109,45 +109,39 @@ class Letter:
         Provided x, y and pen_up, x and y are expected to be a list of coordinates
         and pen_up a list of 0 and 1 where 1 means the pen was removed from the
         tablet at the considered index
-        e.g. x = [0,1,2,3,4,5,6,7,8], y = [9,10,11,12,13,14,15,16,17],
-             pen_up = [0, 0, 1, 0, 0, 1, 0, 0, 1]
-             #TODO: verify if it is not the other way around, i.e. [1, 0, 0, 1, 0, 0, 1, 0, 0]
+        e.g. x = [0,1,2,3,4,5,6,7,8], y = [9,10,11,12,13,14,15,16,17]
         """
-        self.x_list, self.y_list = x, y if pen_up == None else self.xy_list_from_pen_up(x,y,pen_up)
+        self.x_list, self.y_list = x, y
+
+        self.x_list = [x for x in self.x_list if len(x)>0]
+        self.y_list = [x for x in self.y_list if len(x)>0]
+
         self.strokes = [Stroke(x_sublist, y_sublist) for x_sublist, y_sublist in zip(self.x_list, self.y_list)
                         if len(x_sublist)>0 and len(y_sublist)>0]
 
-        self.original_xmin = min([min(sublist) for sublist in self.x_list])
-        self.original_xmax = max([max(sublist) for sublist in self.x_list])
-        self.original_ymin = min([min(sublist) for sublist in self.y_list])
-        self.original_ymax = max([max(sublist) for sublist in self.y_list])
-        self.original_width = self.original_xmax - self.original_xmin
-        self.original_height = self.original_ymax - self.original_ymin
+        self.original_xmin = min([min(sublist) for sublist in self.x_list]) if(len(self.strokes)>0) else 0
+        self.original_xmax = max([max(sublist) for sublist in self.x_list]) if(len(self.strokes)>0) else 0
+        self.original_ymin = min([min(sublist) for sublist in self.y_list]) if(len(self.strokes)>0) else 0
+        self.original_ymax = max([max(sublist) for sublist in self.y_list]) if(len(self.strokes)>0) else 0
+        self.original_width = (self.original_xmax - self.original_xmin) if(len(self.strokes)>0) else 0
+        self.original_height = (self.original_ymax - self.original_ymin) if(len(self.strokes)>0) else 0
 
         self.xmin, self.xmax, self.ymin, self.ymax, self.width, self.height = 0, 0, 0, 0, 0, 0
         self.compute_letter_properties()
 
     def compute_letter_properties(self):
-        self.xmin = min([min(stroke.get_x()) for stroke in self.strokes if len(stroke.get_x())>0])
-        self.xmax = max([max(stroke.get_x()) for stroke in self.strokes if len(stroke.get_x())>0])
-        self.ymin = min([min(stroke.get_y()) for stroke in self.strokes if len(stroke.get_y())>0])
-        self.ymax = max([max(stroke.get_y()) for stroke in self.strokes if len(stroke.get_y())>0])
-        self.width = self.xmax-self.xmin
-        self.height = self.ymax-self.ymin
+        if(len(self.strokes)>0):
+            self.xmin = min([min(stroke.get_x()) for stroke in self.strokes if len(stroke.get_x())>0])
+            self.xmax = max([max(stroke.get_x()) for stroke in self.strokes if len(stroke.get_x())>0])
+            self.ymin = min([min(stroke.get_y()) for stroke in self.strokes if len(stroke.get_y())>0])
+            self.ymax = max([max(stroke.get_y()) for stroke in self.strokes if len(stroke.get_y())>0])
+            self.width = self.xmax-self.xmin
+            self.height = self.ymax-self.ymin
 
     def strokes_idx(self, pen_up):
         idx = [i for i in xrange(len(pen_up)) if pen_up[i]==1]
         idx += [len(pen_up)-1]
         return idx
-
-    def xy_list_from_pen_up(self, x, y, pen_up):
-        idx = [i for i in xrange(len(pen_up)) if pen_up[i]==1]
-        idx += [len(pen_up)-1]
-        x_pts = [x[idx_start:idx_end] for (idx_start, idx_end)
-                            in zip(idx[:-1], idx[1:])]
-        y_pts = [y[idx_start:idx_end] for (idx_start, idx_end)
-                            in zip(idx[:-1], idx[1:])]
-        return x_pts, y_pts
 
     def orig_x(self):
         return self.x
@@ -166,6 +160,17 @@ class Letter:
 
     def get_strokes(self):
         return self.strokes
+
+    def to_stroke_with_pen_up(self):
+        x = sum([stroke.get_x() for stroke in self.strokes], [])
+        y = sum([stroke.get_y() for stroke in self.strokes], [])
+
+        pen_ups = [[0 for i in range(len(stroke.get_x()))] for stroke in self.strokes]
+        for pen_up in pen_ups:
+            pen_up[0] = 1
+        pen_ups = sum(pen_ups, [])
+
+        return Stroke(x,y), pen_ups
 
     def original_dimensions(self):
         return {"xmin":self.original_xmin, "xmax":self.original_xmax,
@@ -348,7 +353,6 @@ def plot_words(words_list, color_mode = "black", title = "", display_idx = False
                     line = ax.add_collection(lc)
 
                 idx_color = idx_color+1
-                print(idx_color, idx_color%len(cmaps))
 
                 if display_idx:
                     bbox_props = dict(boxstyle="circle,pad=0.3", fc="k", lw=2)
@@ -371,14 +375,13 @@ if __name__=="__main__":
         participant_letters = []
 
         for letter, pen_up in zip(p_letters, p_pen_ups):
-            x_strokes = []
-            y_strokes = []
+            x_strokes, y_strokes = [], []
             idx = [i for i in xrange(len(pen_up)) if pen_up[i]==1]
             idx += [len(pen_up)-1]
             x, y = letter.get_x(), letter.get_y()
-            x_pts = [x[idx_start:idx_end] for (idx_start, idx_end)
+            x_pts = [x[idx_start:idx_end+1] for (idx_start, idx_end)
                                 in zip(idx[:-1], idx[1:])]
-            y_pts = [y[idx_start:idx_end] for (idx_start, idx_end)
+            y_pts = [y[idx_start:idx_end+1] for (idx_start, idx_end)
                                 in zip(idx[:-1], idx[1:])]
             for stroke_x, stroke_y in zip(x_pts, y_pts):
                 x_strokes.append(stroke_x)
