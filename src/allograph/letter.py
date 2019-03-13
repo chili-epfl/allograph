@@ -19,7 +19,7 @@ from matplotlib.colors import ListedColormap, BoundaryNorm
 from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
 from matplotlib.cbook import get_sample_data
 
-def merge_words(words_list):
+def merge_words(words_list, fast_mode = True):
     """
     Combines all the words using the letter merging algorithm where
     words_list = [[p1_l1, p1_l2], [p2_l1, p2_l2], [p3_l1, p3_l2])
@@ -31,7 +31,7 @@ def merge_words(words_list):
     letter_properties =  [[words_list[i][j].original_dimensions() for i in range(n_participants)] for j in range(n_letters)]
 
     # Merge the different demonstration letters provided
-    merged_letters = [merge_letters(x) for x in letter_demonstrations]
+    merged_letters = [safe_merge_letters(x, fast_mode) for x in letter_demonstrations]
 
     #NOTE : check from here and down
 
@@ -47,6 +47,16 @@ def merge_words(words_list):
 
     # Return the reconstructed word and individual letters that are normalized
     return rescaled_letters, merged_letters
+
+def safe_merge_letters(letters_list, fast_mode = True):
+    try:
+        return merge_letters(letters_list, fast_mode)
+    except:
+        if fast_mode:
+            print "Error in letter merging, reverting to normal mode"
+            return merge_letters(letters_list, fast_mode = False)
+        else:
+            print "Error merging the given letters"
 
 def merge_letters(letters_list, fast_mode = True):
     """
