@@ -16,5 +16,7 @@ distributions, Recurrent neural networks.
 ## Installation 
 Run sudo python setup.py install
 
-## Letter Dissimilarity Metric
+## Letter Difficulty Based On A Dissimilarity Metric
+The notebook for the computation of the dissimilarity metric can be found [here](https://github.com/LailaHms/allograph/blob/master/notebooks/Letter%20Difficulty%20-%20Dissimilarity%20Measure%20of%20Multivariate%20Time%20Series%20Evolution.ipynb)
+
 The database for the dissimilarity metric computation can be found at https://c4science.ch/diffusion/8574/ but is only accessible to members of the CHILI lab due to ethical constraints pertaining to the nature of the dataset. 
