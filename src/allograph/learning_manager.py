@@ -27,28 +27,21 @@ alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 class LearningManager():
 
-    def __init__(self, generate_path, demo_path, robot_path, ref_path, mode, mode_param):
-        self.generate_path = generate_path
-        self.demo_path = demo_path
-        self.robot_path = robot_path
+    def __init__(self, child_path, ref_path, mode, mode_param):
+
+        self.child_path = child_path
         self.ref_path = ref_path
-        self.robot_data = read_data(self.robot_path,0)
+
+        self.robot_data = read_data(self.child_path, 0)
         self.generated_letters = {}
         self.generate_letters('last_state')
-        self.word_seen = set()
         self.current_word = ""
-        self.refs = read_ref_data(self.ref_path,6) #6=line of the ref in dataset
+        self.refs = read_ref_data(self.ref_path, 6) #6=line of the ref in dataset
         self.mode = mode
         self.mode_param = mode_param
 
-# the path to the ref is something like :
-#fileName = inspect.getsourcefile(ShapeModeler)
-#installDirectory = fileName.split('/lib')[0]
-#refDirectory =  installDirectory + '/share/shape_learning/letter_model_datasets/bad_letters'
-
     def word_to_learn(self, word):
         self.current_word = word
-        self.word_seen.add(word)
 
     def generate_word(self, word):
         generated_word = []
@@ -61,47 +54,24 @@ class LearningManager():
             for letter in alphabet:
                 stroke = self.robot_data[letter][-1]
                 self.generated_letters[letter] = stroke
-        #if mode = 'PCA'
-        #if mode = 'sigNorm' (mixture of sigma-log-normal)
-        #if mode = 'CNN' (1-D convolutionnal neural networks)
 
-    def respond_to_demonstration_word(self, demonstrations, mode='midway', mode_param=0.5): #mutual_modeling will act here
-        if mode == 'midway':
-            for letter,stroke in demonstrations:
-                learned_stroke = stroke.midway(stroke, self.generated_letters[letter])
-
-                self.generated_letters[letter] = learned_stroke
-                save_learned_allograph(self.robot_data, letter, learned_stroke)
-                score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
-        if mode == 'simple':
-            for letter,stroke in demonstrations:
-                learned_stroke = stroke.weigthedSum(stroke, self.generated_letters[letter],mode_param)
-                stroke.save_plot_list(learned_stroke,"learned_"+letter)
-                self.generated_letters[letter] = learned_stroke
-                save_learned_allograph(self.robot_data, letter, learned_stroke)
-                score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
-        #if mode = 'PCA'
-        #if mode = 'sigNorm' (mixture of sigma-log-normal)
-        #if mode = 'CNN' (1-D convolutionnal neural networks)
-
-    def respond_to_demonstration_letter(self, demonstration, letter, mode='midway',mode_param=0.5):
+    def respond_to_demonstration_letter(self, demonstration, letter, mode='midway', mode_param=0.5):
         demo_stroke = Stroke()
         demo_stroke.stroke_from_xxyy(np.reshape(demonstration,len(demonstration)))
-        #demo_stroke.uniformize()
         demo_stroke.normalize_wrt_max()
+
         if mode == 'midway':
             learned_stroke = stroke.midway(demo_stroke, self.generated_letters[letter], mode_param)
             self.generated_letters[letter] = learned_stroke
-            save_learned_allograph(self.robot_path, letter, learned_stroke)
+            save_learned_allograph(self.child_path, letter, learned_stroke)
             _,score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
+
         if mode == 'simple':
             learned_stroke = stroke.weigthedSum(demo_stroke, self.generated_letters[letter], mode_param)
             self.generated_letters[letter] = learned_stroke
-            save_learned_allograph(self.robot_path, letter, learned_stroke)
+            save_learned_allograph(self.child_path, letter, learned_stroke)
             _,score = stroke.euclidian_distance(demo_stroke, self.refs[letter])
-        #if mode = 'PCA'
-        #if mode = 'sigNorm' (mixture of sigma-log-normal)
-        #if mode = 'CNN' (1-D convolutionnal neural networks)
+
         return self.shape_message(letter),score
 
 
@@ -111,18 +81,10 @@ class LearningManager():
         shape = Shape(path=path, shapeType=letter)
         return shape
 
-    def shape_message_word(self):
-        shapes = []
-        for letter in self.current_word:
-            shapes.append(self.shape_message(letter))
-        return shapes
 
-    def seen_before(self, word):
-        return (word in self.word_seen)
 
 # static functions :
 #-------------------
-
 def read_data(datasetDirectory, lines_to_jump):
     data_letters = {}
     datasets = glob.glob(datasetDirectory + '/*.dat')

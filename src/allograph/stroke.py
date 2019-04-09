@@ -150,27 +150,27 @@ class Stroke:
             new_shape.x = []
             new_shape.y = []
             step = shape_length/float(self.len)
-            biggest_smoller_point = 0
+            biggest_smaller_point = 0
             new_shape.append(self.x[0], self.y[0])
             for i in 1+np.array(range(len(self.x)-1)):
                 try:
-                    while i*step > scale[biggest_smoller_point]:
-                        biggest_smoller_point += 1
+                    while i*step > scale[biggest_smaller_point]:
+                        biggest_smaller_point += 1
 
-                    biggest_smoller_point -= 1
-                    x0 = self.x[biggest_smoller_point]
-                    y0 = self.y[biggest_smoller_point]
-                    x1 = self.x[biggest_smoller_point+1]
-                    y1 = self.y[biggest_smoller_point+1]
-                    diff = float(i*step-scale[biggest_smoller_point])
-                    dist = float(scale[biggest_smoller_point+1]-scale[biggest_smoller_point])
+                    biggest_smaller_point -= 1
+                    x0 = self.x[biggest_smaller_point]
+                    y0 = self.y[biggest_smaller_point]
+                    x1 = self.x[biggest_smaller_point+1]
+                    y1 = self.y[biggest_smaller_point+1]
+                    diff = float(i*step-scale[biggest_smaller_point])
+                    dist = float(scale[biggest_smaller_point+1]-scale[biggest_smaller_point])
                     new_x = x0 + diff*(x1-x0)/dist
                     new_y = y0 + diff*(y1-y0)/dist
                     new_shape.append(new_x, new_y)
 
                 except IndexError:
                     print(i*step)
-                    print(biggest_smoller_point)
+                    print(biggest_smaller_point)
                     print(scale)
             #new_shape.append(self.x[-1], self.y[-1])
 
@@ -367,6 +367,7 @@ def midway(stroke1, stroke2, coef = 0):
 
 
 def weigthedSum(stroke1, stroke2, weight = 0.5):
+
     x1 = np.array(stroke1.x)
     x2 = np.array(stroke2.x)
     y1 = np.array(stroke1.y)

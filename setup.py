@@ -4,6 +4,7 @@
 import os
 from distutils.core import setup
 import glob
+import subprocess
 
 setup(name='allograph',
       version='0.1',
@@ -13,7 +14,9 @@ setup(name='allograph',
       author_email='alexis.jacq@epfl.ch',
       package_dir = {'': 'src'},
       packages=['allograph'],
-      data_files=[('share/allograph/robot_tries/start', glob.glob("share/robot_tries/start/*")),
-                  ('share/allograph/letter_model_datasets/alexis_set_for_children', glob.glob("share/letter_model_datasets/alexis_set_for_children/*")),
+      data_files=[('share/allograph/dataset', glob.glob("share/dataset/*")),
                   ('share/doc/allograph', ['AUTHORS', 'LICENSE', 'README.md'])]
       )
+
+# chmod directory
+subprocess.call(['chmod', '-R', '777', '/usr/local/share/allograph/dataset'])
